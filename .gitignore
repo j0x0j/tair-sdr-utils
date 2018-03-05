@@ -4,3 +4,4 @@
 /samples/
 /logs/
 dump.rdb
+pm2.json
