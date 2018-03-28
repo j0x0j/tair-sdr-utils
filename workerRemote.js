@@ -1,6 +1,6 @@
 const fs = require('fs')
 const kue = require('kue')
-const request = require('request')
+const request = require('request-promise')
 const { checkLogLock } = require('./logUtils')
 const jobs = kue.createQueue()
 const log = fs.createWriteStream(__dirname + '/matches.log', { flags : 'w' })
@@ -28,21 +28,20 @@ jobs.process('sample', 2, (job, done) => {
     if (
       data &&
       data.confidence &&
-      data.confidence >= 200
+      data.confidence >= 50
     ) {
       // is a match, should do further processing
-      const date = new Date(data.timestamp)
       // Log to local file before filtering
-      log.write(`${job.data.stn};${data.confidence};${data.song_name};${job.data.uuid};${date.toISOString()}` + '\n')
+      log.write(`${job.data.stn};${data.confidence};${data.song_name};${job.data.uuid};${job.data.timestamp}` + '\n')
       // Check if creative is locked
       // Send matched if properly parsed = not locked
-      if (checkLogLock(job.data.stn, data.song_name, job.data.uuid)) {
+      if (checkLogLock(job.data.stn, data.song_name, job.data.uuid, new Date(job.data.timestamp))) {
         console.log('IS NOT LOCKED, SEND MATCH', job.data.uuid)
         const body = {
           station: job.data.stn,
           creative: data.song_name,
           sample: job.data.uuid,
-          createdAt: date.toISOString(),
+          createdAt: job.data.timestamp,
         }
         const options = {
           method: 'POST',
@@ -51,7 +50,9 @@ jobs.process('sample', 2, (job, done) => {
           json: true,
           body
         }
-        request(options).then(() => done()).catch(err => done(err))
+        request(options)
+          .then(bmpRes => done())
+          .catch(bmpErr => done(bmpErr))
       } else {
         done()
       }
