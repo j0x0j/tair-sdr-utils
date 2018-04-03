@@ -1,5 +1,5 @@
 const lock = {}
-const LOCKTIME = 60 * 1000 * 5
+const LOCKTIME = 60 * 1000 * 3
 
 const Utils = {}
 
@@ -20,7 +20,7 @@ function checkLogLock (station, creative, sampleId, date) {
     const lockDate = lock[station][creative].getMilliseconds()
     // if ellapsed > than lock time, unlock
     // if ellapsed < than lock time, noop
-    if ((date.getMilliseconds() - lockDate) > LOCKTIME) {
+    if ((date.getMilliseconds() * 1000 - lockDate * 1000) > LOCKTIME) {
       // Counts as match
       // Set new lock
       lock[station][creative] = date

@@ -6,3 +6,4 @@
 dump.rdb
 pm2.json
 matches.log
+.env

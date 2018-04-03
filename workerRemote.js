@@ -1,19 +1,24 @@
 const fs = require('fs')
 const kue = require('kue')
 const request = require('request-promise')
+const path = require('path')
 const { checkLogLock } = require('./logUtils')
 const jobs = kue.createQueue()
-const log = fs.createWriteStream(__dirname + '/matches.log', { flags : 'w' })
+const ProtocolInterface = require('./client/Interface')
+const validator = new ProtocolInterface()
+const log = fs.createWriteStream(path.join(__dirname, '/matches.log'), { flags: 'w' })
 
-// const DEJAVU_HOST = 'localhost'
+const matches = {}
+const pendingReveals = []
+
+const ACCEPTED_CONFIDENCE = 50
+
 const DEJAVU_HOST = 'dejavu.tair.network'
 const BMP_HOST = 'bmp.tair.network'
-// const DEJAVU_HOST = '192.168.1.124'
-// const DEJAVU_HOST = 'localhost'
 
 jobs.process('sample', 2, (job, done) => {
   console.log('New Sample Job:', job.data.uuid)
-  const SAMPLE_PATH = __dirname + `/samples/sample_${job.data.uuid}.wav`
+  const SAMPLE_PATH = path.join(__dirname, `/samples/sample_${job.data.uuid}.wav`)
   const options = {
     method: 'POST',
     uri: `http://${DEJAVU_HOST}/sample`,
@@ -28,7 +33,7 @@ jobs.process('sample', 2, (job, done) => {
     if (
       data &&
       data.confidence &&
-      data.confidence >= 50
+      data.confidence >= ACCEPTED_CONFIDENCE
     ) {
       // is a match, should do further processing
       // Log to local file before filtering
@@ -41,7 +46,7 @@ jobs.process('sample', 2, (job, done) => {
           station: job.data.stn,
           creative: data.song_name,
           sample: job.data.uuid,
-          createdAt: job.data.timestamp,
+          createdAt: job.data.timestamp
         }
         const options = {
           method: 'POST',
@@ -51,7 +56,28 @@ jobs.process('sample', 2, (job, done) => {
           body
         }
         request(options)
-          .then(bmpRes => done())
+          .then(bmpRes => {
+            // Should check if match belongs to an active Round
+            // data.song_id
+            const roundId = matches[`match${data.song_id}`]
+            if (roundId) {
+              // Commit matchId
+              const round = +roundId
+              const match = +data.song_id
+              // Reveal on new block
+              pendingReveals.push({ round, match })
+              return validator.commitMatch(round, match)
+            } else {
+              done()
+            }
+          })
+          .then((receipt) => {
+            if (receipt.status === '0x01') {
+              done()
+            } else {
+              done(receipt)
+            }
+          })
           .catch(bmpErr => done(bmpErr))
       } else {
         done()
@@ -63,6 +89,58 @@ jobs.process('sample', 2, (job, done) => {
       })
     }
   })
+})
+
+// Ethereum Contract Client
+validator.events.on('data', (log) => {
+  // Check block height before triage
+  if (validator.blockNumber > log.blockNumber) {
+    // its an old event
+    return
+  }
+  console.log('LOG:', log)
+  if (log.event === 'RoundCreation') {
+    // Should set round data
+    matches[`match${log.returnValues.sampleId}`] =
+      log.returnValues.roundId
+  }
+  if (log.event === 'RoundValidated') {
+    // Should remove round cached data
+    validator.checkWinner(log.returnValues.winner.toLowerCase(), 1)
+  }
+  if (log.event === 'WillCallOraclize') {
+    // Only admin should call this
+    // const random = Math.floor(Math.random() * 100) + 1
+    // validator.finalizeRound(log.returnValues.roundId, random)
+    //   .then(receipt => {
+    //     console.log('RECEIPT', receipt)
+    //   })
+    //   .catch(err => {
+    //     console.log('TXN ERROR', err)
+    //   })
+  }
+})
+
+validator.events.on('error', (err) => {
+  console.log('ERROR:', err)
+})
+
+// Maintain some blockchain state
+validator.pollForNewBlock()
+validator.on('newBlock', (data) => {
+  // should check for pending reveal
+  console.log('new block:', data)
+  console.log(`Polling for new block in 15 seconds`)
+
+  const reveal = pendingReveals.pop()
+  if (!reveal) return
+  validator.revealMatch(reveal.round, reveal.match)
+    .then(receipt => {
+      console.log('RECEIPT STATUS:', receipt)
+    })
+    .catch(err => {
+      console.log('TXN ERROR', err)
+    })
 })
 
 kue.app.listen(3000)

@@ -4,11 +4,6 @@ const wav = require('wav')
 const kue = require('kue')
 const simpleTimer = require('node-timers/simple')
 
-// const STATION = '95.7M'  // Fidelity
-// const STATION = '99.1M'  // SalSoul
-// const STATION = '102.5M' // Hot 102
-// const STATION = '106.9M' // La Mega
-
 const STATION = process.env.band || process.argv[2]
 const DEVICE = process.env.device || process.argv[3]
 
@@ -28,7 +23,7 @@ const child1 = cp.spawn('rtl_fm', [
   '-l', '0',
   '-g', '20',
   '-E', 'deemp',
-  '-r', '44.1k',
+  '-r', '44.1k'
 ])
 
 const child2 = cp.spawn('ffmpeg', [
@@ -50,7 +45,7 @@ let uuid = uuidv4()
 // Writer options
 const opts = {
   endianness: 'LE',
-  channels: 1,
+  channels: 1
 }
 
 let ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`, opts)
@@ -72,7 +67,7 @@ child2.stdout.on('data', chunk => {
       title: `${STATION} - Sample ${uuid}`,
       stn: STATION,
       timestamp: ts.toISOString(),
-      uuid,
+      uuid
     }).save()
 
     uuid = uuidv4()
