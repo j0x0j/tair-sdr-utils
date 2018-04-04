@@ -116,15 +116,15 @@ validator.events.on('data', (log) => {
   }
   if (log.event === 'WillCallOraclize') {
     // Only admin should call this
-    const random = Math.floor(Math.random() * 100) + 1
-    console.log('RANDOM:', random)
-    validator.finalizeRound(log.returnValues.roundId, random)
-      .then(receipt => {
-        console.log('RECEIPT', receipt)
-      })
-      .catch(err => {
-        console.log('TXN ERROR', err)
-      })
+    // const random = Math.floor(Math.random() * 100) + 1
+    // console.log('RANDOM:', random)
+    // validator.finalizeRound(log.returnValues.roundId, random)
+    //   .then(receipt => {
+    //     console.log('RECEIPT', receipt)
+    //   })
+    //   .catch(err => {
+    //     console.log('TXN ERROR', err)
+    //   })
   }
 })
 
