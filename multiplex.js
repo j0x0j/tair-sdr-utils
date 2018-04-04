@@ -24,7 +24,7 @@ const child1 = cp.spawn('rtl_fm', [
   '-g', '20',
   '-E', 'deemp',
   '-r', '44.1k'
-], { stdio: ['pipe', 'pipe', 'ignore'] })
+])
 
 const child2 = cp.spawn('ffmpeg', [
   '-f', 's16le',
@@ -83,8 +83,8 @@ child2.stdout.on('data', chunk => {
 })
 
 // To disable rtl_fm logs
-// child1.stderr.pipe(process.stderr)
-// child2.stderr.pipe(process.stderr)
+child1.stderr.pipe(process.stderr)
+child2.stderr.pipe(process.stderr)
 
 // pm2 start app.js --kill-timeout 3000
 
