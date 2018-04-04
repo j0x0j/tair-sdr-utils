@@ -104,7 +104,6 @@ class Interface {
     if (!salt) {
       throw new Error('No salt for this Round')
     }
-    console.log('REVEALING:', roundId, matchId, salt)
     return this.contract.methods.revealMatch(roundId, matchId, salt).send({
       from: this.clientAddress, gas: 350000
     })
@@ -148,9 +147,8 @@ class Interface {
   * @param {string} winner the address of the Round winner
   */
   checkWinner (winner) {
-    console.log('Cheking Winner:', winner, this.clientAddress)
     if (winner === this.clientAddress) {
-      console.log('')
+      console.log('.')
       console.log('=====')
       console.log('🏆🏆🏆🏆🏆🏆🏆')
       console.log('🏅🏅🏅🏅🏅🏅🏅')
@@ -160,7 +158,7 @@ class Interface {
       console.log('🏅🏅🏅🏅🏅🏅🏅')
       console.log('🏆🏆🏆🏆🏆🏆🏆')
       console.log('=====')
-      console.log('')
+      console.log('.')
     }
   }
 

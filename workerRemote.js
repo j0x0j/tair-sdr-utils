@@ -3,7 +3,7 @@ const kue = require('kue')
 const dotenv = require('dotenv')
 const request = require('request-promise')
 const path = require('path')
-const { checkLogLock } = require('./logUtils')
+const { checkLogLock, prettyLog } = require('./logUtils')
 const jobs = kue.createQueue()
 const ProtocolInterface = require('./client/Interface')
 const validator = new ProtocolInterface()
@@ -43,7 +43,7 @@ jobs.process('sample', 1, (job, done) => {
       // Check if creative is locked
       // Send matched if properly parsed = not locked
       if (checkLogLock(job.data.stn, data.song_name, job.data.uuid, job.data.timestamp)) {
-        console.log('IS NOT LOCKED, SEND MATCH', job.data.uuid)
+        prettyLog('IS NOT LOCKED, SEND MATCH', job.data.uuid)
         const body = {
           station: job.data.stn,
           creative: data.song_name,
@@ -70,6 +70,7 @@ jobs.process('sample', 1, (job, done) => {
               pendingReveals.push({ round, match })
               // delete map
               delete matches[`match${data.song_id}`]
+              prettyLog('COMMIT MATCH:', (round + ' ' + match))
               return validator.commitMatch(round, match)
             } else {
               done()
@@ -77,6 +78,7 @@ jobs.process('sample', 1, (job, done) => {
           })
           .then((receipt) => {
             if (receipt && receipt.status === '0x01') {
+              prettyLog('COMMIT MATCH RECEIPT', receipt.transactionHash)
               done()
             } else {
               done(receipt)
@@ -105,7 +107,8 @@ validator.events.on('data', (log) => {
     // its an old event
     return
   }
-  console.log('LOG:', log)
+  prettyLog('EVENT LOG:', log.event)
+  prettyLog('EVENT LOG VALUES:', log.returnValues)
   if (log.event === 'RoundCreation') {
     // Should set round data
     matches[`match${log.returnValues.sampleId}`] =
@@ -116,15 +119,15 @@ validator.events.on('data', (log) => {
   }
   if (log.event === 'WillCallOraclize') {
     // Only admin should call this
-    // const random = Math.floor(Math.random() * 100) + 1
-    // console.log('RANDOM:', random)
-    // validator.finalizeRound(log.returnValues.roundId, random)
-    //   .then(receipt => {
-    //     console.log('RECEIPT', receipt)
-    //   })
-    //   .catch(err => {
-    //     console.log('TXN ERROR', err)
-    //   })
+    const random = Math.floor(Math.random() * 100) + 1
+    prettyLog('RANDOM:', random)
+    validator.finalizeRound(log.returnValues.roundId, random)
+      .then(receipt => {
+        prettyLog('FINALIZE ROUND RECEIPT', receipt.transactionHash)
+      })
+      .catch(err => {
+        prettyLog('FINALIZE ROUND TXN ERROR', err)
+      })
   }
 })
 
@@ -133,20 +136,21 @@ validator.events.on('error', (err) => {
 })
 
 // Maintain some blockchain state
-validator.pollForNewBlock()
+validator.pollForNewBlock(1000 * 30)
 validator.on('newBlock', (data) => {
   // should check for pending reveal
-  console.log('new block:', data)
-  console.log(`Polling for new block in 15 seconds`)
+  prettyLog('block:', data)
+  // prettyLog(`Polling for new block in 15 seconds`)
 
   const reveal = pendingReveals.pop()
   if (!reveal) return
+  prettyLog('REVEAL MATCH:', (reveal.round + ' ' + reveal.match))
   validator.revealMatch(reveal.round, reveal.match)
     .then(receipt => {
-      console.log('RECEIPT STATUS:', receipt)
+      prettyLog('REVEAL MATCH RECEIPT:', receipt.transactionHash)
     })
     .catch(err => {
-      console.log('TXN ERROR', err)
+      prettyLog('REVEAL MATCH TXN ERROR', err)
     })
 })
 

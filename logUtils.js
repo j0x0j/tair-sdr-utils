@@ -31,6 +31,13 @@ function checkLogLock (station, creative, sampleId, timestamp) {
   }
 }
 
+function prettyLog (key, value = '') {
+  console.log('.')
+  console.log(key, value)
+  console.log('.')
+}
+
 Utils.checkLogLock = checkLogLock
+Utils.prettyLog = prettyLog
 
 module.exports = Utils
