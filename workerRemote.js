@@ -119,15 +119,15 @@ validator.events.on('data', (log) => {
   }
   if (log.event === 'WillCallOraclize') {
     // Only admin should call this
-    const random = Math.floor(Math.random() * 100) + 1
-    prettyLog('RANDOM:', random)
-    validator.finalizeRound(log.returnValues.roundId, random)
-      .then(receipt => {
-        prettyLog('FINALIZE ROUND RECEIPT', receipt.transactionHash)
-      })
-      .catch(err => {
-        prettyLog('FINALIZE ROUND TXN ERROR', err)
-      })
+    // const random = Math.floor(Math.random() * 100) + 1
+    // prettyLog('RANDOM:', random)
+    // validator.finalizeRound(log.returnValues.roundId, random)
+    //   .then(receipt => {
+    //     prettyLog('FINALIZE ROUND RECEIPT', receipt.transactionHash)
+    //   })
+    //   .catch(err => {
+    //     prettyLog('FINALIZE ROUND TXN ERROR', err)
+    //   })
   }
 })
 
