@@ -18,7 +18,7 @@ const ACCEPTED_CONFIDENCE = +config.ACCEPTED_CONFIDENCE
 const DEJAVU_HOST = 'dejavu.tair.network'
 const BMP_HOST = 'bmp.tair.network'
 
-jobs.process('sample', 2, (job, done) => {
+jobs.process('sample', 1, (job, done) => {
   console.log('New Sample Job:', job.data.uuid)
   const SAMPLE_PATH = path.join(__dirname, `/samples/sample_${job.data.uuid}.wav`)
   const options = {
@@ -116,15 +116,15 @@ validator.events.on('data', (log) => {
   }
   if (log.event === 'WillCallOraclize') {
     // Only admin should call this
-    // const random = Math.floor(Math.random() * 100) + 1
-    // console.log('RANDOM:', random)
-    // validator.finalizeRound(log.returnValues.roundId, random)
-    //   .then(receipt => {
-    //     console.log('RECEIPT', receipt)
-    //   })
-    //   .catch(err => {
-    //     console.log('TXN ERROR', err)
-    //   })
+    const random = Math.floor(Math.random() * 100) + 1
+    console.log('RANDOM:', random)
+    validator.finalizeRound(log.returnValues.roundId, random)
+      .then(receipt => {
+        console.log('RECEIPT', receipt)
+      })
+      .catch(err => {
+        console.log('TXN ERROR', err)
+      })
   }
 })
 
