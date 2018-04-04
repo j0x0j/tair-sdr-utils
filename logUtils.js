@@ -3,7 +3,7 @@ const LOCKTIME = 60 * 1000 * 3
 
 const Utils = {}
 
-function checkLogLock (station, creative, sampleId, date) {
+function checkLogLock (station, creative, sampleId, timestamp) {
   // lock is combination of creative and station
   // check if station is in lock object
   if (!lock[station]) {
@@ -13,17 +13,17 @@ function checkLogLock (station, creative, sampleId, date) {
   // if first lock set
   if (!lock[station][creative]) {
     // Counts as match
-    lock[station][creative] = date
+    lock[station][creative] = timestamp
     return true
   } else {
     // if not first get ellapsed from first of set
-    const lockDate = lock[station][creative].getMilliseconds()
+    const lockDate = new Date(lock[station][creative])
     // if ellapsed > than lock time, unlock
     // if ellapsed < than lock time, noop
-    if ((date.getMilliseconds() * 1000 - lockDate * 1000) > LOCKTIME) {
+    if ((new Date(timestamp) - lockDate) > LOCKTIME) {
       // Counts as match
       // Set new lock
-      lock[station][creative] = date
+      lock[station][creative] = timestamp
       return true
     } else {
       return false

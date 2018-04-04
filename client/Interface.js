@@ -146,9 +146,8 @@ class Interface {
   /**
   * @description Check if winner, logs to console
   * @param {string} winner the address of the Round winner
-  * @param {int} amount the amount of ETH won
   */
-  checkWinner (winner, amount) {
+  checkWinner (winner) {
     console.log('Cheking Winner:', winner, this.clientAddress)
     if (winner === this.clientAddress) {
       console.log('')
@@ -156,7 +155,7 @@ class Interface {
       console.log('🏆🏆🏆🏆🏆🏆🏆')
       console.log('🏅🏅🏅🏅🏅🏅🏅')
       console.log('')
-      console.log('💰  ' + amount + ' ETH' + '  💰')
+      console.log(' 💰 WINNER 💰 ')
       console.log('')
       console.log('🏅🏅🏅🏅🏅🏅🏅')
       console.log('🏆🏆🏆🏆🏆🏆🏆')

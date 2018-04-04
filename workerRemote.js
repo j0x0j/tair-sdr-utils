@@ -1,5 +1,6 @@
 const fs = require('fs')
 const kue = require('kue')
+const dotenv = require('dotenv')
 const request = require('request-promise')
 const path = require('path')
 const { checkLogLock } = require('./logUtils')
@@ -11,7 +12,8 @@ const log = fs.createWriteStream(path.join(__dirname, '/matches.log'), { flags: 
 const matches = {}
 const pendingReveals = []
 
-const ACCEPTED_CONFIDENCE = 50
+const config = dotenv.load().parsed
+const ACCEPTED_CONFIDENCE = +config.ACCEPTED_CONFIDENCE
 
 const DEJAVU_HOST = 'dejavu.tair.network'
 const BMP_HOST = 'bmp.tair.network'
@@ -40,7 +42,7 @@ jobs.process('sample', 2, (job, done) => {
       log.write(`${job.data.stn};${data.confidence};${data.song_name};${job.data.uuid};${job.data.timestamp}` + '\n')
       // Check if creative is locked
       // Send matched if properly parsed = not locked
-      if (checkLogLock(job.data.stn, data.song_name, job.data.uuid, new Date(job.data.timestamp))) {
+      if (checkLogLock(job.data.stn, data.song_name, job.data.uuid, job.data.timestamp)) {
         console.log('IS NOT LOCKED, SEND MATCH', job.data.uuid)
         const body = {
           station: job.data.stn,
@@ -66,6 +68,8 @@ jobs.process('sample', 2, (job, done) => {
               const match = +data.song_id
               // Reveal on new block
               pendingReveals.push({ round, match })
+              // delete map
+              delete matches[`match${data.song_id}`]
               return validator.commitMatch(round, match)
             } else {
               done()
@@ -105,8 +109,7 @@ validator.events.on('data', (log) => {
       log.returnValues.roundId
   }
   if (log.event === 'RoundValidated') {
-    // Should remove round cached data
-    validator.checkWinner(log.returnValues.winner.toLowerCase(), 1)
+    validator.checkWinner(log.returnValues.winner.toLowerCase())
   }
   if (log.event === 'WillCallOraclize') {
     // Only admin should call this
