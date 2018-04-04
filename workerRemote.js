@@ -52,7 +52,7 @@ jobs.process('sample', 2, (job, done) => {
         }
         const options = {
           method: 'POST',
-          uri: `https://${BMP_HOST}/log`,
+          uri: `http://${BMP_HOST}/log`,
           resolveWithFullResponse: true,
           json: true,
           body
@@ -76,13 +76,16 @@ jobs.process('sample', 2, (job, done) => {
             }
           })
           .then((receipt) => {
-            if (receipt.status === '0x01') {
+            if (receipt && receipt.status === '0x01') {
               done()
             } else {
               done(receipt)
             }
           })
-          .catch(bmpErr => done(bmpErr))
+          .catch(bmpErr => {
+            console.log('BMP ERROR:', bmpErr)
+            done(bmpErr)
+          })
       } else {
         done()
       }
@@ -114,6 +117,7 @@ validator.events.on('data', (log) => {
   if (log.event === 'WillCallOraclize') {
     // Only admin should call this
     // const random = Math.floor(Math.random() * 100) + 1
+    // console.log('RANDOM:', random)
     // validator.finalizeRound(log.returnValues.roundId, random)
     //   .then(receipt => {
     //     console.log('RECEIPT', receipt)
