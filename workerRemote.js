@@ -5,21 +5,17 @@ const request = require('request-promise')
 const path = require('path')
 const { checkLogLock, prettyLog } = require('./logUtils')
 const jobs = kue.createQueue()
-const ProtocolInterface = require('./client/Interface')
-const validator = new ProtocolInterface()
 const log = fs.createWriteStream(path.join(__dirname, '/matches.log'), { flags: 'w' })
-
-const matches = {}
-const pendingReveals = []
 
 const config = dotenv.load().parsed
 const ACCEPTED_CONFIDENCE = +config.ACCEPTED_CONFIDENCE
+const CONCURRENT_JOBS = +config.CONCURRENT_JOBS
 
 const DEJAVU_HOST = 'dejavu.tair.network'
 const BMP_HOST = 'bmp.tair.network'
 
-jobs.process('sample', 1, (job, done) => {
-  console.log('New Sample Job:', job.data.uuid)
+jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
+  prettyLog('New Sample Job:', job.data.uuid)
   const SAMPLE_PATH = path.join(__dirname, `/samples/sample_${job.data.uuid}.wav`)
   const options = {
     method: 'POST',
@@ -58,36 +54,8 @@ jobs.process('sample', 1, (job, done) => {
           body
         }
         request(options)
-          .then(bmpRes => {
-            // Should check if match belongs to an active Round
-            // data.song_id
-            const roundId = matches[`match${data.song_id}`]
-            if (roundId) {
-              // Commit matchId
-              const round = +roundId
-              const match = +data.song_id
-              // Reveal on new block
-              pendingReveals.push({ round, match })
-              // delete map
-              delete matches[`match${data.song_id}`]
-              prettyLog('COMMIT MATCH:', (round + ' ' + match))
-              return validator.commitMatch(round, match)
-            } else {
-              done()
-            }
-          })
-          .then((receipt) => {
-            if (receipt && receipt.status === '0x01') {
-              prettyLog('COMMIT MATCH RECEIPT', receipt.transactionHash)
-              done()
-            } else {
-              done(receipt)
-            }
-          })
-          .catch(bmpErr => {
-            console.log('BMP ERROR:', bmpErr)
-            done(bmpErr)
-          })
+          .then(bmpRes => { done() })
+          .catch(bmpErr => { done(bmpErr) })
       } else {
         done()
       }
@@ -98,60 +66,6 @@ jobs.process('sample', 1, (job, done) => {
       })
     }
   })
-})
-
-// Ethereum Contract Client
-validator.events.on('data', (log) => {
-  // Check block height before triage
-  if (validator.blockNumber > log.blockNumber) {
-    // its an old event
-    return
-  }
-  prettyLog('EVENT LOG:', log.event)
-  prettyLog('EVENT LOG VALUES:', log.returnValues)
-  if (log.event === 'RoundCreation') {
-    // Should set round data
-    matches[`match${log.returnValues.sampleId}`] =
-      log.returnValues.roundId
-  }
-  if (log.event === 'RoundValidated') {
-    validator.checkWinner(log.returnValues.winner.toLowerCase())
-  }
-  if (log.event === 'WillCallOraclize') {
-    // Only admin should call this
-    // const random = Math.floor(Math.random() * 100) + 1
-    // prettyLog('RANDOM:', random)
-    // validator.finalizeRound(log.returnValues.roundId, random)
-    //   .then(receipt => {
-    //     prettyLog('FINALIZE ROUND RECEIPT', receipt.transactionHash)
-    //   })
-    //   .catch(err => {
-    //     prettyLog('FINALIZE ROUND TXN ERROR', err)
-    //   })
-  }
-})
-
-validator.events.on('error', (err) => {
-  console.log('ERROR:', err)
-})
-
-// Maintain some blockchain state
-validator.pollForNewBlock(1000 * 30)
-validator.on('newBlock', (data) => {
-  // should check for pending reveal
-  prettyLog('block:', data)
-  // prettyLog(`Polling for new block in 15 seconds`)
-
-  const reveal = pendingReveals.pop()
-  if (!reveal) return
-  prettyLog('REVEAL MATCH:', (reveal.round + ' ' + reveal.match))
-  validator.revealMatch(reveal.round, reveal.match)
-    .then(receipt => {
-      prettyLog('REVEAL MATCH RECEIPT:', receipt.transactionHash)
-    })
-    .catch(err => {
-      prettyLog('REVEAL MATCH TXN ERROR', err)
-    })
 })
 
 kue.app.listen(3000)

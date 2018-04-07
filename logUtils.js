@@ -1,5 +1,9 @@
+const dotenv = require('dotenv')
+const config = dotenv.load().parsed
+const MATCH_LOCK_MINUTES = +config.MATCH_LOCK_MINUTES
+
 const lock = {}
-const LOCKTIME = 60 * 1000 * 3
+const LOCKTIME = 60 * 1000 * MATCH_LOCK_MINUTES
 
 const Utils = {}
 

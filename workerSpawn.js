@@ -21,7 +21,7 @@ jobs.process('sample', 4, (job, done) => {
     `${DEJAVU_APP_PATH}/dejavu.cnf.SAMPLE`,
     '--recognize',
     'file',
-    SAMPLE_PATH,
+    SAMPLE_PATH
   ])
 
   child1.stdout.on('data', chunk => {
