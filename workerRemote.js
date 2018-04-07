@@ -43,6 +43,7 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
         const body = {
           station: job.data.stn,
           creative: data.song_name,
+          market: job.data.market,
           sample: job.data.uuid,
           createdAt: job.data.timestamp
         }

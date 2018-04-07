@@ -2,8 +2,11 @@ const cp = require('child_process')
 const uuidv4 = require('uuid/v4')
 const wav = require('wav')
 const kue = require('kue')
+const dotenv = require('dotenv')
 const simpleTimer = require('node-timers/simple')
 
+const config = dotenv.load().parsed
+const MARKET = config.MARKET
 const STATION = process.env.band || process.argv[2]
 const DEVICE = process.env.device || process.argv[3]
 
@@ -66,6 +69,7 @@ child2.stdout.on('data', chunk => {
     jobs.create('sample', {
       title: `${STATION} - Sample ${uuid}`,
       stn: STATION,
+      market: MARKET,
       timestamp: ts.toISOString(),
       uuid
     }).save()
