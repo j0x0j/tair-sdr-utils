@@ -1,0 +1,22 @@
+{
+  "apps": [
+    {
+      "exec_mode": "fork_mode",
+      "script": "./cutter.js",
+      "name": "multi-0",
+      "node_args": [],
+      "env": {},
+      "error_file": "./logs/multi-0.err.log",
+      "out_file": "./logs/multi-0.out.log"
+    },
+    {
+      "exec_mode": "fork_mode",
+      "script": "./workerCutter.js",
+      "name": "multi-1",
+      "node_args": [],
+      "env": {},
+      "error_file": "./logs/multi-4.err.log",
+      "out_file": "./logs/multi-4.out.log"
+    }
+  ]
+}

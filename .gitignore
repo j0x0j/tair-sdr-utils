@@ -2,8 +2,10 @@
 /scrapes/
 /raw/
 /samples/
+/cuts/
 /logs/
 dump.rdb
 pm2.json
 .env
 /matches.log
+.DS_Store
