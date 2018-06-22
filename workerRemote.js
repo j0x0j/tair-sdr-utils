@@ -6,10 +6,14 @@ const path = require('path')
 const { checkLogLock, prettyLog } = require('./logUtils')
 const jobs = kue.createQueue()
 const log = fs.createWriteStream(path.join(__dirname, '/matches.log'), { flags: 'w' })
+const aws = require('aws-sdk')
+const s3 = new aws.S3({apiVersion: '2006-03-01'});
 
 const config = dotenv.load().parsed
 const ACCEPTED_CONFIDENCE = +config.ACCEPTED_CONFIDENCE
 const CONCURRENT_JOBS = +config.CONCURRENT_JOBS
+const S3_BUCKET = config.S3_BUCKET
+const DEVICE = config.DEVICE
 
 const DEJAVU_HOST = 'dejavu.tair.network'
 const BMP_HOST = 'bmp.tair.network'
@@ -55,7 +59,25 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
           body
         }
         request(options)
-          .then(bmpRes => { done() })
+          .then(bmpRes => {
+            const s3Params = {
+              Bucket: S3_BUCKET,
+              Key: '',
+              Body: ''
+            };
+            const fileStream = fs.createReadStream(SAMPLE_PATH)
+            fileStream.on('error', (fsErr) => {
+              done(fsErr)
+            })
+            s3Params.Body = fileStream
+            s3Params.Key = 'devices/' + DEVICE + '/' + job.data.stn + '/samples/' + path.basename(SAMPLE_PATH)
+            s3.upload(s3Params, (s3Err, response) => {
+              if (s3Err) done(s3Err)
+              fs.unlink(SAMPLE_PATH, (err) => {
+                done(err)
+              })
+            })
+          })
           .catch(bmpErr => { done(bmpErr) })
       } else {
         done()

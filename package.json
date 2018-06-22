@@ -9,16 +9,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.260.1",
     "csv-parse": "^2.0.0",
     "dotenv": "^5.0.1",
     "form-data": "^2.3.1",
     "kue": "^0.11.6",
     "node-timers": "0.0.2",
-    "request": "^2.81.0",
+    "request": "^2.87.0",
     "request-promise": "^4.2.2",
     "stream-transform": "^1.0.0",
     "uuid": "^3.1.0",
-    "wav": "^1.0.1",
-    "web3": "^1.0.0-beta.33"
+    "wav": "^1.0.2",
+    "web3": "^1.0.0-beta.34"
   }
 }
