@@ -58,6 +58,7 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
           json: true,
           body
         }
+        const s3Path = 'devices/' + DEVICE + '/' + job.data.stn + '/samples/' + `sample_${job.data.uuid}_${job.data.timestamp}.wav`
         request(options)
           .then(bmpRes => {
             const s3Params = {
@@ -70,7 +71,7 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
               done(fsErr)
             })
             s3Params.Body = fileStream
-            s3Params.Key = 'devices/' + DEVICE + '/' + job.data.stn + '/samples/' + path.basename(SAMPLE_PATH)
+            s3Params.Key = s3Path
             s3.upload(s3Params, (s3Err, response) => {
               if (s3Err) done(s3Err)
               fs.unlink(SAMPLE_PATH, (err) => {
