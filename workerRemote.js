@@ -20,7 +20,7 @@ const BMP_HOST = 'bmp.tair.network'
 
 jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
   prettyLog('New Sample Job:', job.data.uuid)
-  const SAMPLE_PATH = path.join(__dirname, `/samples/sample_${job.data.uuid}_${job.data.timestamp}.wav`)
+  const SAMPLE_PATH = path.join(__dirname, `/samples/sample_${job.data.uuid}.wav`)
   const options = {
     method: 'POST',
     uri: `http://${DEJAVU_HOST}/sample`,
