@@ -2,10 +2,12 @@ const fs = require('fs')
 const cp = require('child_process')
 const uuidv4 = require('uuid/v4')
 const wav = require('wav')
+const kue = require('kue')
 const simpleTimer = require('node-timers/simple')
 
 const STATION = process.env.band || process.argv[2]
 const DEVICE = process.env.device || process.argv[3]
+const SCRAPE_DURATION = 1000 * 60 * 60;
 
 if (!STATION || !DEVICE) {
   throw new Error('Needs a station and device index')
@@ -34,6 +36,9 @@ const child2 = cp.spawn('ffmpeg', [
 
 const simple = simpleTimer({ pollInterval: 100 })
 
+// Create queue
+const jobs = kue.createQueue()
+
 // Initial UUID
 let uuid = uuidv4()
 // Writer options
@@ -43,7 +48,7 @@ const opts = {
 }
 
 let ws = new wav.FileWriter(
-  `./scrapes/scrape_${STATION}_${new Date().toISOString()}.wav`,
+  `./scrapes/scrape_${uuid}.wav`,
   opts
 )
 
@@ -55,12 +60,19 @@ child1.stdout.on('data', chunk => {
 
 child2.stdout.on('data', chunk => {
   let time = simple.time()
-  if (time >= (1000 * 60 * 60)) {
+  if (time >= SCRAPE_DURATION) {
+    const ts = new Date()
+    ts.setSeconds(ts.getSeconds() - SCRAPE_DURATION)
+    jobs.create('scrape', {
+      stn: STATION,
+      timestamp: ts.toISOString(),
+      uuid
+    }).save()
     uuid = uuidv4()
     simple.reset().start()
     ws.end()
     ws = new wav.FileWriter(
-      `./scrapes/scrape_${STATION}_${new Date().toISOString()}.wav`,
+      `./scrapes/scrape_${uuid}.wav`,
       opts
     )
   }
