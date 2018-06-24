@@ -7,7 +7,7 @@ const simpleTimer = require('node-timers/simple')
 
 const STATION = process.env.band || process.argv[2]
 const DEVICE = process.env.device || process.argv[3]
-const SCRAPE_DURATION = 1000 * 60 * 60;
+const SCRAPE_DURATION = 1000 * 60 * 60
 
 if (!STATION || !DEVICE) {
   throw new Error('Needs a station and device index')
