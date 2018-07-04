@@ -86,7 +86,7 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
 
     // if the possible match identified by song_id has enough time accounted for it
     if (timeAccountedFor >= (job.data.song_duration * 1000) - missingTimeLimit) {
-      let lastSegment = possibleMatch.segments[possibleMatch.segments - 1]
+      let lastSegment = possibleMatch.segments[possibleMatch.segments.length - 1]
       let paddedStartTime = lastSegment.timestamp - (lastSegment.offset_seconds * 1000) - MATCH_PADDING
       let paddedEndTime = paddedStartTime + (job.data.song_duration * 1000) + (MATCH_PADDING * 2)
       let uuid = uuidv4()
