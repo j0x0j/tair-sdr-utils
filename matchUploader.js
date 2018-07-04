@@ -50,7 +50,10 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
       body
     }
     request(options)
-      .then(bmpRes => { done() })
+      .then(bmpRes => {
+        prettyLog('file uploaded to s3 for: ', data.song_name)
+        done()
+      })
       .catch(bmpErr => { done(bmpErr) })
   })
 })

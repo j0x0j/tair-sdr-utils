@@ -44,7 +44,7 @@ let possibleMatches = {}
 */
 
 jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
-  prettyLog('New Match Segment Job for:', job.data.song_name)
+  prettyLog('New Match Segment Job for: '+job.data.song_name)
   let timeAccountedFor = 0; // milliseconds
   let possibleMatch = possibleMatches[job.data.song_id];
   // missingTimeLimit is the limit for missing matched audio duration.
@@ -101,13 +101,13 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
           ws.write(Buffer.from(chunkString, 'utf8'))
         })
         ws.end()
-
+        prettyLog(`Created local match file: ./matches/match_${uuid}.wav for: ` + possibleMatch.song_name)
         jobs.create('match', {
           song_id: possibleMatch.song_id,
           title: possibleMatch.song_name,
           station: possibleMatch.station,
           market: possibleMatch.market,
-          timestamp: startTime,
+          timestamp: paddedStartTime,
           file_path: `./matches/match_${uuid}.wav`,
           uuid
         }).save()
