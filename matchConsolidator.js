@@ -46,15 +46,15 @@ let possibleMatches = {}
 jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
   prettyLog('New Match Segment Job for:', job.data.song_name)
   let timeAccountedFor = 0; // milliseconds
-
+  let possibleMatch = possibleMatches[job.data.song_id];
   // missingTimeLimit is the limit for missing matched audio duration.
   // if we get a match for a song that is already missing too much matched time, it is not a match.
   // for example, we could just be hearing a clip of a song being used in an ad.
   let missingTimeLimit = Math.min(SAMPLE_TIME, job.data.song_duration * 1000 * (1 - VERIFICATION_RATIO))
 
   // Don't add possible matches if there is already more missing time than allowed to verify a match
-  if (possibleMatches[job.data.song_id] || job.data.offset_seconds * 1000 < missingTimeLimit) {
-    if (!possibleMatches[job.data.song_id]) {
+  if (possibleMatch || job.data.offset_seconds * 1000 < missingTimeLimit) {
+    if (!possibleMatch) {
       possibleMatches[job.data.song_id] = {
         song_id: job.data.song_id,
         song_name: job.data.song_name,
@@ -62,15 +62,16 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
         station: job.data.station,
         segments: []
       }
+      possibleMatch = possibleMatches[job.data.song_id];
     }
 
-    possibleMatches[job.data.song_id].segments.push({
+    possibleMatch.segments.push({
       uuid: job.data.uuid,
       offset_seconds: job.data.offset_seconds,
       timestamp: job.data.timestamp
     })
 
-    possibleMatches[job.data.song_id].segments.forEach((segment) => {
+    possibleMatch.segments.forEach((segment) => {
       if ( job.data.offset_seconds * 1000 <= 0 ) {
         // this means the sample starts before the song starts
         timeAccountedFor += SAMPLE_TIME + (job.data.offset_seconds * 1000)
