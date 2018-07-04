@@ -97,7 +97,7 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
         channels: 1
       })
 
-      redisClient.zrange(['SIGNAL_CACHE', paddedStartTime.toString(), paddedEndTime.toString()], (chunkStrings) => {
+      redisClient.zrange(['SIGNAL_CACHE', paddedStartTime.toString(), paddedEndTime.toString()], (err, chunkStrings) => {
         chunkStrings.forEach((chunkString) => {
           ws.write(Buffer.from(chunkString, 'utf8'))
         })
