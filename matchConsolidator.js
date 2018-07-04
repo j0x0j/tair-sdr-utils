@@ -101,21 +101,20 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
         chunkStrings.forEach((chunkString) => {
           ws.write(Buffer.from(chunkString, 'utf8'))
         })
+        ws.end()
+
+        jobs.create('match', {
+          song_id: possibleMatch.song_id,
+          title: possibleMatch.song_name,
+          station: possibleMatch.station,
+          market: possibleMatch.market,
+          timestamp: startTime,
+          file_path: `./matches/match_${uuid}.wav`,
+          uuid
+        }).save()
+        // clear possibleMatches
+        possibleMatches = {}
       })
-
-      ws.end()
-
-      jobs.create('match', {
-        song_id: possibleMatch.song_id,
-        title: possibleMatch.song_name,
-        station: possibleMatch.station,
-        market: possibleMatch.market,
-        timestamp: startTime,
-        file_path: `./matches/match_${uuid}.wav`,
-        uuid
-      }).save()
-      // clear possibleMatches
-      possibleMatches = {}
     }
   }
   done()
