@@ -96,7 +96,7 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
         channels: 1
       })
 
-      redisClient.zrange(['SIGNAL_CACHE', paddedStartTime.toString(), paddedEndTime.toString()], (err, chunkStrings) => {
+      redisClient.zrange(['SIGNAL_CACHE', paddedStartTime, paddedEndTime], (err, chunkStrings) => {
         if(err) {
           prettyLog("Error running zrange for: " + possibleMatch.song_name)
           prettyLog(err)
