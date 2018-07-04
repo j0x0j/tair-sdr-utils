@@ -15,7 +15,6 @@ const ACCEPTED_CONFIDENCE = +config.ACCEPTED_CONFIDENCE
 const CONCURRENT_JOBS = +config.CONCURRENT_JOBS
 const S3_BUCKET = config.S3_BUCKET
 const DEJAVU_HOST = 'dejavu.tair.network'
-const BMP_HOST = 'bmp.tair.network'
 
 jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
   prettyLog('New Sample Job:', job.data.uuid)

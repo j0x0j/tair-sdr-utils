@@ -111,7 +111,7 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
         station: possibleMatch.station,
         market: possibleMatch.market,
         timestamp: startTime,
-        audio_path: '',
+        file_path: `./matches/match_${uuid}.wav`,
         uuid
       }).save()
       // clear possibleMatches
