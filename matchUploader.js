@@ -36,10 +36,10 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
     })
     // post the match to the BMP
     const body = {
-      station: job.data.stn,
+      station: job.data.station,
       creative: data.song_name,
       market: job.data.market,
-      sample: job.data.uuid,
+      s3Path: s3Path,
       createdAt: job.data.timestamp
     }
     const options = {
