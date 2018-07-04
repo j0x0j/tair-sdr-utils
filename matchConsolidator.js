@@ -55,7 +55,7 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
   let possibleMatch = possibleMatches[job.data.song_id]
 
   // Don't add possible matches if there is already more missing time than allowed to verify a match
-  if (possibleMatch || job.data.offset_seconds < missingTimeLimit) {
+  if (possibleMatch || job.data.offset_seconds > missingTimeLimit) {
     if (!possibleMatch) {
       possibleMatch = {
         song_id: job.data.song_id,
