@@ -52,12 +52,10 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
   // for example, we could just be hearing a clip of a song being used in an ad.
   let missingTimeLimit = Math.min(SAMPLE_TIME, job.data.song_duration * 1000 * (1 - VERIFICATION_RATIO))
 
-  let possibleMatch = possibleMatches[job.data.song_id]
-
   // Don't add possible matches if there is already more missing time than allowed to verify a match
-  if (possibleMatch || job.data.offset_seconds < missingTimeLimit) {
-    if (!possibleMatch) {
-      possibleMatch = {
+  if (possibleMatches[job.data.song_id] || job.data.offset_seconds < missingTimeLimit) {
+    if (!possibleMatches[job.data.song_id]) {
+      possibleMatches[job.data.song_id] = {
         song_id: job.data.song_id,
         song_name: job.data.song_name,
         song_duration: job.data.song_duration,
@@ -66,13 +64,13 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
       }
     }
 
-    possibleMatch.segments.push({
+    possibleMatches[job.data.song_id].segments.push({
       uuid: job.data.uuid,
       offset_seconds: job.data.offset_seconds,
       timestamp: job.data.timestamp
     })
 
-    possibleMatches[song_id].segments.forEach((segment) => {
+    possibleMatches[job.data.song_id].segments.forEach((segment) => {
       if ( job.data.offset_seconds * 1000 <= 0 ) {
         // this means the sample starts before the song starts
         timeAccountedFor += SAMPLE_TIME + (job.data.offset_seconds * 1000)
