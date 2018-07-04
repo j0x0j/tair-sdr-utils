@@ -2,16 +2,18 @@ const cp = require('child_process')
 const uuidv4 = require('uuid/v4')
 const wav = require('wav')
 const kue = require('kue')
+const jobs = kue.createQueue()
 const dotenv = require('dotenv')
+const redis = require('redis')
+const redisClient = redis.createClient();
 const simpleTimer = require('node-timers/simple')
+const simple = simpleTimer({ pollInterval: 100 })
 
 const config = dotenv.load().parsed
-const MARKET = config.MARKET
+const MARKET = +config.MARKET
+const SAMPLE_TIME = +config.SAMPLE_TIME
 const STATION = process.env.band || process.argv[2]
 const DEVICE = process.env.device || process.argv[3]
-
-// The duration of a segment (in milliseconds)
-const SEGMENT_TIME = 5000
 
 if (!STATION || !DEVICE) {
   throw new Error('Needs a station and device index')
@@ -38,11 +40,6 @@ const child2 = cp.spawn('ffmpeg', [
   '-'
 ])
 
-const simple = simpleTimer({ pollInterval: 100 })
-
-// Create queue
-const jobs = kue.createQueue()
-
 // Initial UUID
 let uuid = uuidv4()
 // Writer options
@@ -53,19 +50,24 @@ const opts = {
 
 let ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`, opts)
 
+kue.app.listen(3000)
+
 simple.start()
 
 child1.stdout.on('data', chunk => {
+  // add chunk to redis sorted set: SIGNAL_CACHE for Date.now()
+  // This timestamp won't match the ffempeg timestamp exactly but will be close enough for our needs.
+  redisClient.zadd(['SIGNAL_CACHE', 'NX', Date.now().toString(), chunk.toString()])
   child2.stdin.write(chunk)
 })
 
 child2.stdout.on('data', chunk => {
   let time = simple.time()
-  if (time >= SEGMENT_TIME) {
+  if (time >= SAMPLE_TIME) {
     // should enqueue a new job
     // with the current timestamp
     const ts = new Date()
-    ts.setSeconds(ts.getSeconds() - (SEGMENT_TIME / 1000))
+    ts.setSeconds(ts.getSeconds() - (SAMPLE_TIME / 1000))
     jobs.create('sample', {
       title: `${STATION} - Sample ${uuid}`,
       stn: STATION,
@@ -77,11 +79,7 @@ child2.stdout.on('data', chunk => {
     uuid = uuidv4()
     simple.reset().start()
     ws.end()
-    ws = new wav.FileWriter(
-      // `./samples/sample_${STATION}_${new Date().toISOString()}_${uuid}.wav`,
-      `./samples/sample_${uuid}.wav`,
-      opts
-    )
+    ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`,opts)
   }
   ws.write(chunk)
 })

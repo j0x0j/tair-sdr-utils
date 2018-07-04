@@ -1,0 +1,122 @@
+const fs = require('fs')
+const uuidv4 = require('uuid/v4')
+const kue = require('kue')
+const wav = require('wav')
+const dotenv = require('dotenv')
+const request = require('request-promise')
+const path = require('path')
+const { prettyLog } = require('./logUtils')
+const jobs = kue.createQueue()
+const log = fs.createWriteStream(path.join(__dirname, '/matches.log'), { flags: 'w' })
+const aws = require('aws-sdk')
+const s3 = new aws.S3({apiVersion: '2006-03-01'});
+const redis = require('redis')
+const redisClient = redis.createClient();
+
+const config = dotenv.load().parsed
+const CONCURRENT_JOBS = +config.CONCURRENT_JOBS
+// sample time is in milliseconds
+const SAMPLE_TIME = +config.SAMPLE_TIME
+// the percentage of audio time (up to 5 secs) that needs to be accounted for to verify a match
+const VERIFICATION_RATIO = 0.95
+// this is the number of milliseconds of audio to include before and after a match
+const MATCH_PADDING = 5000
+
+let possibleMatches = {}
+/*
+  {
+    <song_id>: {
+      song_id: <song_id>,
+      song_name: <song_name>,
+      song_duration: <song_duration>,
+      station: <station>,
+      segments: [
+        {
+          uuid: <uuid>,
+          offset_seconds: <offset_seconds>,
+          timestamp: <timestamp>
+        },
+        ...
+      ]
+    },
+    ...
+  }
+*/
+
+jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
+  prettyLog('New Match Segment Job for:', job.data.song_name)
+  let timeAccountedFor = 0; // milliseconds
+
+  // missingTimeLimit is the limit for missing matched audio duration.
+  // if we get a match for a song that is already missing too much matched time, it is not a match.
+  // for example, we could just be hearing a clip of a song being used in an ad.
+  let missingTimeLimit = Math.min(SAMPLE_TIME, job.data.song_duration * 1000 * (1 - VERIFICATION_RATIO))
+
+  let possibleMatch = possibleMatches[job.data.song_id]
+
+  // Don't add possible matches if there is already more missing time than allowed to verify a match
+  if (possibleMatch || job.data.offset_seconds < missingTimeLimit) {
+    if (!possibleMatch) {
+      possibleMatch = {
+        song_id: job.data.song_id,
+        song_name: job.data.song_name,
+        song_duration: job.data.song_duration,
+        station: job.data.station,
+        segments: []
+      }
+    }
+
+    possibleMatch.segments.push({
+      uuid: job.data.uuid,
+      offset_seconds: job.data.offset_seconds,
+      timestamp: job.data.timestamp
+    })
+
+    possibleMatches[song_id].segments.forEach((segment) => {
+      if ( job.data.offset_seconds * 1000 <= 0 ) {
+        // this means the sample starts before the song starts
+        timeAccountedFor += SAMPLE_TIME + (job.data.offset_seconds * 1000)
+      } else if ((job.data.song_duration - job.data.offset_seconds) * 1000 < SAMPLE_TIME) {
+        // this means the song ends before the sample ends
+        timeAccountedFor += (job.data.song_duration - job.data.offset_seconds) * 1000
+      } else {
+        // this means the sample is ntirely within the song
+        timeAccountedFor += SAMPLE_TIME
+      }
+    })
+
+    // if the possible match identified by song_id has enough time accounted for it
+    if (timeAccountedFor >= (job.data.song_duration * 1000) - missingTimeLimit) {
+      let lastSegment = possibleMatch.segments[possibleMatch.segments - 1]
+      let paddedStartTime = lastSegment.timestamp - (lastSegment.offset_seconds * 1000) - MATCH_PADDING
+      let paddedEndTime = paddedStartTime + (job.data.song_duration * 1000) + (MATCH_PADDING * 2)
+      let uuid = uuidv4()
+
+      let ws = new wav.FileWriter(`./matches/match_${uuid}.wav`, {
+        endianness: 'LE',
+        channels: 1
+      })
+
+      redisClient.zrange(['SIGNAL_CACHE', paddedStartTime.toString(), paddedEndTime.toString()], (chunkStrings) => {
+        chunkStrings.forEach((chunkString) => {
+          ws.write(Buffer.from(chunkString, 'utf8'))
+        })
+      })
+
+      ws.end()
+
+      jobs.create('match', {
+        song_id: possibleMatch.song_id,
+        title: possibleMatch.song_name,
+        station: possibleMatch.station,
+        market: possibleMatch.market,
+        timestamp: startTime,
+        audio_path: '',
+        uuid
+      }).save()
+      // clear possibleMatches
+      possibleMatches = {}
+    }
+  }
+  done()
+})
