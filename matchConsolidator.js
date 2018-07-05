@@ -45,6 +45,7 @@ let possibleMatches = {}
 
 jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
   prettyLog('New Match Segment Job for: '+job.data.song_name)
+  prettyLog(job.data)
   let timeAccountedFor = 0; // milliseconds
   let possibleMatch = possibleMatches[job.data.song_id];
   // missingTimeLimit is the limit for missing matched audio duration.
@@ -101,8 +102,6 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
           prettyLog("Error running zrange for: " + possibleMatch.song_name)
           prettyLog(err)
         }
-        prettyLog("chunkStrings from zrange for: " + possibleMatch.song_name)
-        prettyLog(chunkStrings)
         chunkStrings.forEach((chunkString) => {
           ws.write(Buffer.from(chunkString, 'utf8'))
         })
