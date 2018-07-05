@@ -3,13 +3,8 @@ const uuidv4 = require('uuid/v4')
 const kue = require('kue')
 const wav = require('wav')
 const dotenv = require('dotenv')
-const request = require('request-promise')
-const path = require('path')
 const { prettyLog } = require('./logUtils')
 const jobs = kue.createQueue()
-const log = fs.createWriteStream(path.join(__dirname, '/matches.log'), { flags: 'w' })
-const aws = require('aws-sdk')
-const s3 = new aws.S3({apiVersion: '2006-03-01'});
 const redis = require('redis')
 const redisClient = redis.createClient();
 
@@ -74,17 +69,16 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
     })
 
     possibleMatch.segments.forEach((segment) => {
-      if ( job.data.offset_seconds * 1000 <= 0 ) {
-        // this means the sample starts before the song starts
+      if (job.data.offset_seconds * 1000 <= 0) {
+        // this means the sample starts before the song starts. offset_seconds should be negative.
         timeAccountedFor += SAMPLE_TIME + (job.data.offset_seconds * 1000)
-      } else if ((job.data.song_duration - job.data.offset_seconds) * 1000 < SAMPLE_TIME) {
-        // this means the song ends before the sample ends
-        timeAccountedFor += (job.data.song_duration - job.data.offset_seconds) * 1000
       } else {
-        // this means the sample is ntirely within the song
-        timeAccountedFor += SAMPLE_TIME
+        // this means the song ends before the sample ends or the sample is entirely in the song
+        timeAccountedFor += Math.min(SAMPLE_TIME, ((job.data.song_duration - job.data.offset_seconds) * 1000))
       }
     })
+
+    prettyLog('timeAccountedFor: ' + timeAccountedFor)
 
     // if the possible match identified by song_id has enough time accounted for it
     if (timeAccountedFor >= (job.data.song_duration * 1000) - missingTimeLimit) {
@@ -92,6 +86,10 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
       let paddedStartTime = Math.round(lastSegment.timestamp - (lastSegment.offset_seconds * 1000) - MATCH_PADDING)
       let paddedEndTime = Math.round(paddedStartTime + (job.data.song_duration * 1000) + (MATCH_PADDING * 2))
       let uuid = uuidv4()
+
+      prettyLog('paddedStartTime: ' + paddedStartTime)
+      prettyLog('paddedEndTime: ' + paddedEndTime)
+      prettyLog('duration: ' + (paddedEndTime - paddedStartTime))
 
       let ws = new wav.FileWriter(`./matches/match_${uuid}.wav`, {
         endianness: 'LE',
