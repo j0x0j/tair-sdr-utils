@@ -67,12 +67,12 @@ child2.stdout.on('data', chunk => {
     // should enqueue a new job
     // with the current timestamp
     const ts = new Date()
-    ts.setSeconds(ts.getSeconds() - (SAMPLE_TIME / 1000))
+    ts.setMilliseconds(ts.getMilliseconds() - SAMPLE_TIME)
     jobs.create('sample', {
       title: `${STATION} - Sample ${uuid}`,
       stn: STATION,
       market: MARKET,
-      timestamp: ts.toISOString(),
+      timestamp: ts.getMilliseconds(),
       uuid
     }).save()
 
