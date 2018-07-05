@@ -104,7 +104,7 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
           prettyLog(err)
         }
         chunkStrings.forEach((chunkString) => {
-          ws.write(chunkString)
+          ws.write(Buffer.from(chunkString, 'base64'))
         })
         ws.end()
         prettyLog(`Created local match file: ./matches/match_${uuid}.wav for: ` + possibleMatch.song_name)
