@@ -31,13 +31,10 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
   s3Params.Key = s3Path
   s3.upload(s3Params, (s3Err, response) => {
     if (s3Err) done(s3Err)
-    fs.unlink(job.data.file_path, (err) => {
-      done(err)
-    })
     // post the match to the BMP
     const body = {
       station: job.data.station,
-      creative: data.song_name,
+      creative: job.data.song_name,
       market: job.data.market,
       s3Path: s3Path,
       createdAt: job.data.timestamp
@@ -52,7 +49,9 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
     request(options)
       .then(bmpRes => {
         prettyLog('file uploaded to s3 for: ', data.song_name)
-        done()
+        fs.unlink(job.data.file_path, (err) => {
+          done(err)
+        })
       })
       .catch(bmpErr => { done(bmpErr) })
   })
