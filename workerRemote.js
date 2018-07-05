@@ -37,7 +37,7 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
         song_duration: dejavu_data.song_duration,
         offset_seconds: dejavu_data.offset_seconds,
         timestamp: job.data.timestamp,
-        station: job.data.stn,
+        station: job.data.station,
         market: job.data.market,
         uuid: uuidv4()
       }

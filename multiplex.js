@@ -68,7 +68,7 @@ child2.stdout.on('data', chunk => {
     // with the current timestamp
     jobs.create('sample', {
       title: `${STATION} - Sample ${uuid}`,
-      stn: STATION,
+      station: STATION,
       market: MARKET,
       timestamp: Date.now() - SAMPLE_TIME,
       uuid

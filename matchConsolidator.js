@@ -61,6 +61,7 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
         song_name: job.data.song_name,
         song_duration: job.data.song_duration,
         station: job.data.station,
+        market: job.data.market,
         segments: []
       }
       possibleMatch = possibleMatches[job.data.song_id];
