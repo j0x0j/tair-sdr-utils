@@ -103,10 +103,6 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
           prettyLog("Error running zrange for: " + possibleMatch.song_name)
           prettyLog(err)
         }
-        prettyLog("typeof chunkStrings: ")
-        prettyLog(typeof chunkStrings)
-        prettyLog("chunkStrings:")
-        prettyLog(chunkStrings)
         chunkStrings.forEach((chunkString) => {
           ws.write(Buffer.from(chunkString, 'utf8'))
         })
