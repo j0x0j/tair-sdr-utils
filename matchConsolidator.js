@@ -11,9 +11,7 @@ const redisClient = redis.createClient();
 const config = dotenv.load().parsed
 const CONCURRENT_JOBS = config.CONCURRENT_JOBS
 // sample time is in milliseconds
-const SAMPLE_TIME = config.SAMPLE_TIME
-// the percentage of audio time (up to 5 secs) that needs to be accounted for to verify a match
-const VERIFICATION_RATIO = config.VERIFICATION_RATIO
+const SAMPLE_TIME = parseInt(config.SAMPLE_TIME)
 // this is the number of milliseconds of audio to include before and after a match
 const MATCH_PADDING = 5000
 
@@ -77,6 +75,7 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
         timeAccountedFor += Math.min(SAMPLE_TIME, ((job.data.song_duration - job.data.offset_seconds) * 1000))
       }
     })
+    prettyLog('timeAccountedFor is of type: ' + (typeof timeAccountedFor))
 
     prettyLog('timeAccountedFor: ' + timeAccountedFor)
 
