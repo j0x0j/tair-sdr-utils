@@ -69,7 +69,7 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
     possibleMatch.segments.forEach((segment) => {
       if (job.data.offset_seconds * 1000 <= 0) {
         // this means the sample starts before the song starts. offset_seconds should be negative.
-        timeAccountedFor += SAMPLE_TIME + (job.data.offset_seconds * 1000)
+        timeAccountedFor += (SAMPLE_TIME + (job.data.offset_seconds * 1000))
       } else {
         // this means the song ends before the sample ends or the sample is entirely in the song
         timeAccountedFor += Math.min(SAMPLE_TIME, ((job.data.song_duration - job.data.offset_seconds) * 1000))
