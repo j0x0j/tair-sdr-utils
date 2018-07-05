@@ -10,8 +10,8 @@ const simpleTimer = require('node-timers/simple')
 const simple = simpleTimer({ pollInterval: 100 })
 
 const config = dotenv.load().parsed
-const MARKET = +config.MARKET
-const SAMPLE_TIME = +config.SAMPLE_TIME
+const MARKET = config.MARKET
+const SAMPLE_TIME = config.SAMPLE_TIME
 const STATION = process.env.band || process.argv[2]
 const DEVICE = process.env.device || process.argv[3]
 
@@ -57,7 +57,7 @@ simple.start()
 child1.stdout.on('data', chunk => {
   // add chunk to redis sorted set: SIGNAL_CACHE for Date.now()
   // This timestamp won't match the ffempeg timestamp exactly but will be close enough for our needs.
-  redisClient.zadd(['SIGNAL_CACHE', 'NX', Date.now().toString(), chunk.toString()])
+  redisClient.zadd(['SIGNAL_CACHE', 'NX', Date.now(), chunk.toString()])
   child2.stdin.write(chunk)
 })
 
@@ -66,13 +66,11 @@ child2.stdout.on('data', chunk => {
   if (time >= SAMPLE_TIME) {
     // should enqueue a new job
     // with the current timestamp
-    const ts = new Date()
-    ts.setMilliseconds(ts.getMilliseconds() - SAMPLE_TIME)
     jobs.create('sample', {
       title: `${STATION} - Sample ${uuid}`,
       stn: STATION,
       market: MARKET,
-      timestamp: ts.getMilliseconds(),
+      timestamp: Date.now() - SAMPLE_TIME,
       uuid
     }).save()
 

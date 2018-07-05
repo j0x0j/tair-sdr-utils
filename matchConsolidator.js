@@ -14,11 +14,11 @@ const redis = require('redis')
 const redisClient = redis.createClient();
 
 const config = dotenv.load().parsed
-const CONCURRENT_JOBS = +config.CONCURRENT_JOBS
+const CONCURRENT_JOBS = config.CONCURRENT_JOBS
 // sample time is in milliseconds
-const SAMPLE_TIME = +config.SAMPLE_TIME
+const SAMPLE_TIME = config.SAMPLE_TIME
 // the percentage of audio time (up to 5 secs) that needs to be accounted for to verify a match
-const VERIFICATION_RATIO = +config.VERIFICATION_RATIO
+const VERIFICATION_RATIO = config.VERIFICATION_RATIO
 // this is the number of milliseconds of audio to include before and after a match
 const MATCH_PADDING = 5000
 
