@@ -11,8 +11,8 @@ const aws = require('aws-sdk')
 const s3 = new aws.S3({apiVersion: '2006-03-01'});
 
 const config = dotenv.load().parsed
-const ACCEPTED_CONFIDENCE = config.ACCEPTED_CONFIDENCE
-const CONCURRENT_JOBS = config.CONCURRENT_JOBS
+const ACCEPTED_CONFIDENCE = +config.ACCEPTED_CONFIDENCE
+const CONCURRENT_JOBS = +config.CONCURRENT_JOBS
 const S3_BUCKET = config.S3_BUCKET
 const DEJAVU_HOST = 'dejavu.tair.network'
 

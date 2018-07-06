@@ -11,7 +11,7 @@ const simple = simpleTimer({ pollInterval: 100 })
 
 const config = dotenv.load().parsed
 const MARKET = config.MARKET
-const SAMPLE_TIME = config.SAMPLE_TIME
+const SAMPLE_TIME = +config.SAMPLE_TIME
 const STATION = process.env.band || process.argv[2]
 const DEVICE = process.env.device || process.argv[3]
 
