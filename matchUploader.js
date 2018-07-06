@@ -5,7 +5,6 @@ const request = require('request-promise')
 const path = require('path')
 const { prettyLog } = require('./logUtils')
 const jobs = kue.createQueue()
-const log = fs.createWriteStream(path.join(__dirname, '/matches.log'), { flags: 'w' })
 const aws = require('aws-sdk')
 const s3 = new aws.S3({apiVersion: '2006-03-01'});
 
