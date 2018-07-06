@@ -4,9 +4,16 @@ const dotenv = require('dotenv')
 const { prettyLog } = require('./logUtils')
 const jobs = kue.createQueue()
 const aws = require('aws-sdk')
-const s3 = new aws.S3({apiVersion: '2006-03-01'})
-
 const config = dotenv.load().parsed
+
+if (config.AWS_KEY && config.AWS_SECRET) {
+  aws.config.update({
+    accessKeyId: config.AWS_KEY,
+    secretAccessKey: config.AWS_SECRET
+  })
+}
+
+const s3 = new aws.S3({apiVersion: '2006-03-01'})
 const CONCURRENT_JOBS = +config.CONCURRENT_JOBS
 const S3_BUCKET = config.S3_BUCKET
 const DEVICE = config.DEVICE
@@ -15,6 +22,7 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
   prettyLog('New match Job:', job.data.uuid)
   const s3Path = 'devices/' + DEVICE + '/' + job.data.station + '/matches/' + `match_${job.data.song_id}_${job.data.timestamp}.wav`
   const s3Params = {
+    ACL: 'public-read',
     Bucket: S3_BUCKET,
     Key: '',
     Body: ''
@@ -26,7 +34,7 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
   s3Params.Body = fileStream
   s3Params.Key = s3Path
   s3.upload(s3Params, (s3Err, response) => {
-    if (s3Err) done(s3Err)
+    if (s3Err) return done(s3Err)
     prettyLog('file uploaded to s3 for:', job.data.song_name)
     prettyLog('s3 Response:')
     prettyLog(response)
