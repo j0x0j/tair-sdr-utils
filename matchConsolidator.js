@@ -56,7 +56,7 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
   prettyLog('New Match Segment Job for: '+job.data.song_name)
   prettyLog(job.data)
   let timeAccountedFor = 0; // milliseconds
-  let songStartTime = job.data.timestamp - (job.data.offset_seconds * 1000)
+  let songStartTime = Math.round(job.data.timestamp - (job.data.offset_seconds * 1000))
   let possibleMatch = checkForExistingMatch(job.data.song_id, songStartTime);
   // missingTimeLimit is the limit for missing matched audio duration.
   // if we get a match for a song that is already missing too much matched time, it is not a match.
@@ -68,6 +68,9 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
   if (possibleMatch || job.data.offset_seconds * 1000 < missingTimeLimit) {
     if (!possibleMatch) {
       let songStartTimeString = songStartTime.toString()
+      if (!possibleMatches[job.data.song_id]) {
+        possibleMatches[job.data.song_id] = {}
+      }
       possibleMatches[job.data.song_id][songStartTimeString] = {
         song_id: job.data.song_id,
         song_name: job.data.song_name,
