@@ -1,18 +1,15 @@
 const fs = require('fs')
 const kue = require('kue')
 const dotenv = require('dotenv')
-const request = require('request-promise')
-const path = require('path')
 const { prettyLog } = require('./logUtils')
 const jobs = kue.createQueue()
 const aws = require('aws-sdk')
-const s3 = new aws.S3({apiVersion: '2006-03-01'});
+const s3 = new aws.S3({apiVersion: '2006-03-01'})
 
 const config = dotenv.load().parsed
 const CONCURRENT_JOBS = +config.CONCURRENT_JOBS
 const S3_BUCKET = config.S3_BUCKET
 const DEVICE = config.DEVICE
-const BMP_HOST = 'bmp.tair.network'
 
 jobs.process('match', CONCURRENT_JOBS, (job, done) => {
   prettyLog('New match Job:', job.data.uuid)
@@ -21,7 +18,7 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
     Bucket: S3_BUCKET,
     Key: '',
     Body: ''
-  };
+  }
   const fileStream = fs.createReadStream(job.data.file_path)
   fileStream.on('error', (fsErr) => {
     done(fsErr)
@@ -30,8 +27,8 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
   s3Params.Key = s3Path
   s3.upload(s3Params, (s3Err, response) => {
     if (s3Err) done(s3Err)
-    prettyLog('file uploaded to s3 for: ', job.data.song_name)
-    prettyLog("s3 Response: ")
+    prettyLog('file uploaded to s3 for:', job.data.song_name)
+    prettyLog('s3 Response:')
     prettyLog(response)
     done()
     // TODO: add this back in when all is working:

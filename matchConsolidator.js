@@ -1,4 +1,3 @@
-const fs = require('fs')
 const uuidv4 = require('uuid/v4')
 const kue = require('kue')
 const wav = require('wav')
@@ -6,7 +5,7 @@ const dotenv = require('dotenv')
 const { prettyLog } = require('./logUtils')
 const jobs = kue.createQueue()
 const redis = require('redis')
-const redisClient = redis.createClient();
+const redisClient = redis.createClient()
 
 const config = dotenv.load().parsed
 const CONCURRENT_JOBS = +config.CONCURRENT_JOBS
@@ -40,29 +39,29 @@ possibleMatches = {
   }
 */
 
-function checkForExistingMatch(songId, songStartTime) {
+function checkForExistingMatch (songId, songStartTime) {
   if (possibleMatches[songId]) {
-    for(var song_start_time_string in possibleMatches[songId]){
-      let existingStartTime = parseInt(song_start_time_string)
+    for (var songStartTimeString in possibleMatches[songId]) {
+      let existingStartTime = parseInt(songStartTimeString)
       if (Math.abs(existingStartTime - songStartTime) < SAMPLE_TIME) {
-        return possibleMatches[songId][song_start_time_string];
+        return possibleMatches[songId][songStartTimeString]
       }
     }
   }
-  return null;
+  return null
 }
 
 jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
-  prettyLog('New Match Segment Job for: '+job.data.song_name)
+  prettyLog('New Match Segment Job for: ' + job.data.song_name)
   prettyLog(job.data)
-  let timeAccountedFor = 0; // milliseconds
+  let timeAccountedFor = 0 // milliseconds
   let songStartTime = Math.round(job.data.timestamp - (job.data.offset_seconds * 1000))
-  let possibleMatch = checkForExistingMatch(job.data.song_id, songStartTime);
+  let possibleMatch = checkForExistingMatch(job.data.song_id, songStartTime)
   // missingTimeLimit is the limit for missing matched audio duration.
   // if we get a match for a song that is already missing too much matched time, it is not a match.
   // for example, we could just be hearing a clip of a song being used in an ad.
   let missingTimeLimit = SAMPLE_TIME
-  let segmentCount = 0;
+  let segmentCount = 0
 
   // Don't add possible matches if there is already more missing time than allowed to verify a match
   if (possibleMatch || job.data.offset_seconds * 1000 < missingTimeLimit) {
@@ -126,15 +125,15 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
           })
 
           redisClient.zrangebyscore('SIGNAL_CACHE', paddedStartTime, paddedEndTime, (err, chunkStrings) => {
-            if(err) {
-              prettyLog("Error running zrange for: " + possibleMatch.song_name)
+            if (err) {
+              prettyLog('Error running zrange for:', possibleMatch.song_name)
               prettyLog(err)
             }
             chunkStrings.forEach((chunkString) => {
               ws.write(Buffer.from(chunkString, 'base64'))
             })
             ws.end()
-            prettyLog(`Created local match file: ./matches/match_${uuid}.wav for: ` + possibleMatch.song_name)
+            prettyLog(`Created local match file: ./matches/match_${uuid}.wav for: ${possibleMatch.song_name}`)
             jobs.create('match', {
               song_id: possibleMatch.song_id,
               title: possibleMatch.song_name,
@@ -149,7 +148,7 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
           })
         }
       }
-    }, SAMPLE_TIME*2)
+    }, SAMPLE_TIME * 2)
   }
   done()
 })

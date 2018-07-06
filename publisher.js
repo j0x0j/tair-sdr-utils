@@ -3,7 +3,8 @@ const parse = require('csv-parse')
 const parser = parse({ delimiter: ';' })
 const transform = require('stream-transform')
 const request = require('request')
-const stream = fs.createReadStream(__dirname + '/parsed_matches_11-6.log.csv')
+const path = require('path')
+const stream = fs.createReadStream(path.join(__dirname, '/parsed_matches_11-6.log.csv'))
 
 parser.on('error', function (err) {
   console.log(err.message)

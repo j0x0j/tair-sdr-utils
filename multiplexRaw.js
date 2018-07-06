@@ -12,7 +12,7 @@ const child1 = cp.spawn('rtl_fm', [
   '-A', 'std',
   '-l', '0',
   '-E', 'deemp',
-  '-r', '44.1k',
+  '-r', '44.1k'
 ])
 
 let uuid = uuidv4()

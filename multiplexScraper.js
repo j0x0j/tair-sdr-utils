@@ -1,4 +1,3 @@
-const fs = require('fs')
 const cp = require('child_process')
 const uuidv4 = require('uuid/v4')
 const wav = require('wav')
@@ -44,7 +43,7 @@ let uuid = uuidv4()
 // Writer options
 const opts = {
   endianness: 'LE',
-  channels: 1,
+  channels: 1
 }
 
 let ws = new wav.FileWriter(

@@ -5,7 +5,7 @@ const kue = require('kue')
 const jobs = kue.createQueue()
 const dotenv = require('dotenv')
 const redis = require('redis')
-const redisClient = redis.createClient();
+const redisClient = redis.createClient()
 const simpleTimer = require('node-timers/simple')
 const simple = simpleTimer({ pollInterval: 100 })
 
@@ -77,7 +77,7 @@ child2.stdout.on('data', chunk => {
     uuid = uuidv4()
     simple.reset().start()
     ws.end()
-    ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`,opts)
+    ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`, opts)
   }
   ws.write(chunk)
 })

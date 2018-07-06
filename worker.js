@@ -1,8 +1,9 @@
 const fs = require('fs')
 const kue = require('kue')
 const request = require('request')
+const path = require('path')
 const jobs = kue.createQueue()
-const log = fs.createWriteStream(__dirname + '/matches.log', { flags : 'w' })
+const log = fs.createWriteStream(path.join(__dirname, '/matches.log'), { flags: 'w' })
 
 jobs.process('sample', 1, (job, done) => {
   console.log('New Sample Job:', job.data.uuid)

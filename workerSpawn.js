@@ -1,8 +1,9 @@
 const fs = require('fs')
 const kue = require('kue')
 const cp = require('child_process')
+const path = require('path')
 const jobs = kue.createQueue()
-const log = fs.createWriteStream(__dirname + '/matches.log', { flags : 'w' })
+const log = fs.createWriteStream(path.join(__dirname, '/matches.log'), { flags: 'w' })
 
 const BASE_PATH = '/Users/jo/projects/tair'
 const NODE_APP_PATH = `${BASE_PATH}/sdr`

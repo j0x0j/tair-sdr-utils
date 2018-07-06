@@ -2,7 +2,8 @@ const fs = require('fs')
 const parse = require('csv-parse')
 const parser = parse({ delimiter: ';' })
 const transform = require('stream-transform')
-const stream = fs.createReadStream(__dirname + '/parsed_matches_11-7-al-8.log.csv')
+const path = require('path')
+const stream = fs.createReadStream(path.join(__dirname, '/parsed_matches_11-7-al-8.log.csv'))
 
 const reduced = {}
 
@@ -11,9 +12,6 @@ parser.on('error', function (err) {
 })
 
 const transformer = transform(record => {
-  const station = record[0]
-  const creative = record[2]
-  const sampleId = record[3]
   const date = new Date(record[4])
   console.log(date.toLocaleString())
   const day = date.getDate()
