@@ -29,7 +29,9 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
   request(options, (err, res, body) => {
     if (err) throw err
     const dejavu_data = JSON.parse(body)
+    prettyLog('dejavu confidence is: ' + dejavu_data.confidence)
     if (dejavu_data && dejavu_data.confidence && dejavu_data.confidence >= ACCEPTED_CONFIDENCE) {
+      prettyLog('dejavu confidence passed threshold of: ' + ACCEPTED_CONFIDENCE)
       // it's a match, add a match segment to the job queue
       let segment_data = {
         song_id: dejavu_data.song_id,
