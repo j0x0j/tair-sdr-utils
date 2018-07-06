@@ -7,5 +7,7 @@
 dump.rdb
 pm2.json
 .env
+/matches/
 /matches.log
+/matches-*
 .DS_Store
