@@ -98,12 +98,12 @@ jobs.process('match-segment', CONCURRENT_JOBS, (job, done) => {
         prettyLog('No more segments have been added')
         // check if we have enough time accounted for
         possibleMatch.segments.forEach((segment) => {
-          if (job.data.offset_seconds * 1000 <= 0) {
+          if (segment.offset_seconds * 1000 <= 0) {
             // this means the sample starts before the song starts. offset_seconds should be negative.
-            timeAccountedFor += (SAMPLE_TIME + (job.data.offset_seconds * 1000))
+            timeAccountedFor += (SAMPLE_TIME + (segment.offset_seconds * 1000))
           } else {
             // this means the song ends before the sample ends or the sample is entirely in the song
-            timeAccountedFor += Math.min(SAMPLE_TIME, ((job.data.song_duration - job.data.offset_seconds) * 1000))
+            timeAccountedFor += Math.min(SAMPLE_TIME, ((job.data.song_duration - segment.offset_seconds) * 1000))
           }
         })
 
