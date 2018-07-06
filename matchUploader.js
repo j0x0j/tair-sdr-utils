@@ -31,6 +31,10 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
   s3Params.Key = s3Path
   s3.upload(s3Params, (s3Err, response) => {
     if (s3Err) done(s3Err)
+    prettyLog('file uploaded to s3 for: ', data.song_name)
+    prettyLog("s3 Response: ")
+    prettyLog(response)
+    fs.unlink(job.data.file_path)
     // post the match to the BMP
     const body = {
       station: job.data.station,
@@ -48,10 +52,7 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
     }
     request(options)
       .then(bmpRes => {
-        prettyLog('file uploaded to s3 for: ', data.song_name)
-        fs.unlink(job.data.file_path, (err) => {
-          done(err)
-        })
+        done()
       })
       .catch(bmpErr => { done(bmpErr) })
   })
