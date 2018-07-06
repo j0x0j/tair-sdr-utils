@@ -34,7 +34,7 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
     prettyLog('file uploaded to s3 for: ', job.data.song_name)
     prettyLog("s3 Response: ")
     prettyLog(response)
-    fs.unlink(job.data.file_path)
+    // TODO: add this back in when all is working: fs.unlink(job.data.file_path)
     // post the match to the BMP
     const body = {
       station: job.data.station,
