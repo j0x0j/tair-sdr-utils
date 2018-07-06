@@ -34,26 +34,28 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
     prettyLog('file uploaded to s3 for: ', job.data.song_name)
     prettyLog("s3 Response: ")
     prettyLog(response)
-    // TODO: add this back in when all is working: fs.unlink(job.data.file_path)
+    done()
+    // TODO: add this back in when all is working:
+    // fs.unlink(job.data.file_path)
     // post the match to the BMP
-    const body = {
-      station: job.data.station,
-      creative: job.data.song_name,
-      market: job.data.market,
-      s3Path: s3Path,
-      createdAt: job.data.timestamp
-    }
-    const options = {
-      method: 'POST',
-      uri: `http://${BMP_HOST}/log`,
-      resolveWithFullResponse: true,
-      json: true,
-      body
-    }
-    request(options)
-      .then(bmpRes => {
-        done()
-      })
-      .catch(bmpErr => { done(bmpErr) })
+    // const body = {
+    //   station: job.data.station,
+    //   creative: job.data.song_name,
+    //   market: job.data.market,
+    //   s3Path: s3Path,
+    //   createdAt: job.data.timestamp
+    // }
+    // const options = {
+    //   method: 'POST',
+    //   uri: `http://${BMP_HOST}/log`,
+    //   resolveWithFullResponse: true,
+    //   json: true,
+    //   body
+    // }
+    // request(options)
+    //   .then(bmpRes => {
+    //     done()
+    //   })
+    //   .catch(bmpErr => { done(bmpErr) })
   })
 })
