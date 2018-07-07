@@ -150,6 +150,8 @@ jobs.process('match-segment', 1, (job, done) => {
             })
             ws.end()
           })
+        } else {
+          delete possibleMatches[job.data.song_id][songStartTimeString]
         }
       }
     }, SAMPLE_TIME * 2)
