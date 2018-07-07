@@ -55,9 +55,6 @@ kue.app.listen(3000)
 simple.start()
 
 child1.stdout.on('data', chunk => {
-  // add chunk to redis sorted set: SIGNAL_CACHE for Date.now()
-  // This timestamp won't match the ffempeg timestamp exactly but will be close enough for our needs.
-  redisClient.zadd('SIGNAL_CACHE', 'NX', Date.now(), chunk.toString('base64'))
   child2.stdin.write(chunk)
 })
 
@@ -80,6 +77,9 @@ child2.stdout.on('data', chunk => {
     ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`, opts)
   }
   ws.write(chunk)
+  // add chunk to redis sorted set: SIGNAL_CACHE for Date.now()
+  // This timestamp won't match the ffempeg timestamp exactly but will be close enough for our needs.
+  redisClient.zadd('SIGNAL_CACHE', 'NX', Date.now(), chunk.toString('base64'))
 })
 
 // To disable rtl_fm logs
