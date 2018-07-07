@@ -73,8 +73,10 @@ child2.stdout.on('data', chunk => {
 
     uuid = uuidv4()
     simple.reset().start()
+    ws.on('end', () => {
+      ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`, opts)
+    })
     ws.end()
-    ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`, opts)
   }
   ws.write(chunk)
   // add chunk to redis sorted set: SIGNAL_CACHE for Date.now()

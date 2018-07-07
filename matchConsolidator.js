@@ -145,10 +145,10 @@ jobs.process('match-segment', 1, (job, done) => {
                 file_path: `./matches/match_${uuid}.wav`,
                 uuid
               }).save()
+              // clear possibleMatches
+              delete possibleMatches[job.data.song_id][songStartTimeString]
             })
             ws.end()
-            // clear possibleMatches
-            delete possibleMatches[job.data.song_id][songStartTimeString]
           })
         }
       }
