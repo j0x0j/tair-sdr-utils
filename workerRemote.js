@@ -25,24 +25,31 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
   }
   request(options, (err, res, body) => {
     if (err) throw err
-    const dejavuData = JSON.parse(body)
-    prettyLog('dejavu confidence is:', dejavuData.confidence)
-    if (dejavuData && dejavuData.confidence && dejavuData.confidence >= ACCEPTED_CONFIDENCE) {
-      prettyLog('dejavu confidence passed threshold of:', ACCEPTED_CONFIDENCE)
-      // it's a match, add a match segment to the job queue
-      let segmentData = {
-        song_id: dejavuData.song_id,
-        song_name: dejavuData.song_name,
-        song_duration: dejavuData.song_duration,
-        offset_seconds: dejavuData.offset_seconds,
-        timestamp: job.data.timestamp,
-        station: job.data.station,
-        market: job.data.market,
-        uuid: uuidv4()
-      }
-      jobs.create('match-segment', segmentData).save()
-      log.write(`${job.data.stn};${dejavuData.confidence};${dejavuData.song_name};${job.data.uuid};${job.data.timestamp}` + '\n')
+    const dejavuJson = JSON.parse(body)
+    const possibleMatches =  array();
+    possibleMatches.push(dejavuJson);
+    if (dejavuJson['fallback_matches']) {
+      possibleMatches.concat(dejavuJson['fallback_matches'])
     }
+    possibleMatches.forEach((dejavuData) => {
+      prettyLog('dejavu confidence is:', dejavuData.confidence)
+      if (dejavuData && dejavuData.confidence && dejavuData.confidence >= ACCEPTED_CONFIDENCE) {
+        prettyLog('dejavu confidence passed threshold of:', ACCEPTED_CONFIDENCE)
+        // it's a match, add a match segment to the job queue
+        let segmentData = {
+          song_id: dejavuData.song_id,
+          song_name: dejavuData.song_name,
+          song_duration: dejavuData.song_duration,
+          offset_seconds: dejavuData.offset_seconds,
+          timestamp: job.data.timestamp,
+          station: job.data.station,
+          market: job.data.market,
+          uuid: uuidv4()
+        }
+        jobs.create('match-segment', segmentData).save()
+        log.write(`${job.data.stn};${dejavuData.confidence};${dejavuData.song_name};${job.data.uuid};${job.data.timestamp}` + '\n')
+      }
+    })
     fs.unlink(SAMPLE_PATH, (err) => {
       done(err)
     })
