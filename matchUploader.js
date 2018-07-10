@@ -17,6 +17,7 @@ const s3 = new aws.S3({ apiVersion: '2006-03-01' })
 const CONCURRENT_JOBS = +config.CONCURRENT_JOBS
 const S3_BUCKET = config.S3_BUCKET
 const DEVICE = config.DEVICE
+const BMP_HOST = 'bmp.tair.network'
 
 jobs.process('match', CONCURRENT_JOBS, (job, done) => {
   prettyLog('New match Job:', job.data.uuid)
