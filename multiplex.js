@@ -46,6 +46,8 @@ kue.app.listen(3000)
 simple.start()
 
 child1.stdout.on('data', chunk => {
+  // Pause stream to manage backpressure manually
+  child1.stdout.pause()
   let time = simple.time()
   if (time >= SAMPLE_TIME) {
     // should enqueue a new job
@@ -63,10 +65,14 @@ child1.stdout.on('data', chunk => {
     ws.on('end', () => {
       ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`, opts)
       ws.write(chunk)
+      // Resume stream manually
+      child1.stdout.resume()
     })
     ws.end()
   } else {
     ws.write(chunk)
+    // Resume stream manually
+    child1.stdout.resume()
   }
   // add chunk to redis sorted set: SIGNAL_CACHE for Date.now()
   // This timestamp won't match the ffempeg timestamp exactly but will be close enough for our needs.
