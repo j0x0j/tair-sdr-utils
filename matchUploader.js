@@ -1,6 +1,7 @@
 const fs = require('fs')
 const kue = require('kue')
 const dotenv = require('dotenv')
+const request = require('request-promise')
 const { prettyLog } = require('./logUtils')
 const jobs = kue.createQueue()
 const aws = require('aws-sdk')

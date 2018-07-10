@@ -26,8 +26,8 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
   request(options, (err, res, body) => {
     if (err) throw err
     const dejavuJson = JSON.parse(body)
-    const possibleMatches = [];
-    possibleMatches.push(dejavuJson);
+    const possibleMatches = []
+    possibleMatches.push(dejavuJson)
     if (dejavuJson['fallback_matches']) {
       possibleMatches.concat(dejavuJson['fallback_matches'])
     }
