@@ -46,9 +46,12 @@ kue.app.listen(3000)
 simple.start()
 
 child1.stdout.on('data', chunk => {
-  // Pause stream to manage backpressure manually
+  // Pause stream to manage backpressure manually]
   child1.stdout.pause()
+  // Define the recurring file stream
+  // Get the current timer elapsed time
   let time = simple.time()
+  // If we have enough elapsed time for a sample
   if (time >= SAMPLE_TIME) {
     // should enqueue a new job
     // with the current timestamp
@@ -59,16 +62,20 @@ child1.stdout.on('data', chunk => {
       timestamp: Date.now() - SAMPLE_TIME,
       uuid
     }).save()
-
+    // Generate a new sample id
     uuid = uuidv4()
+    // Reset timer
     simple.reset().start()
     ws.on('end', () => {
-      ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`, opts)
+      // Only write after previous stream has ended
       ws.write(chunk)
       // Resume stream manually
       child1.stdout.resume()
     })
+    // Close the current stream
     ws.end()
+    // Create new sample file
+    ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`, opts)
   } else {
     ws.write(chunk)
     // Resume stream manually
