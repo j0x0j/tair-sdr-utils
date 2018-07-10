@@ -42,7 +42,7 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
       prettyLog('file uploaded to s3 for:', job.data.song_name)
       prettyLog('s3 path: ', s3Path)
       prettyLog('s3 response: ', response)
-      fs.unlink(job.data.file_path)
+      fs.unlinkSync(job.data.file_path)
       // post the match to the BMP:
       const body = {
         station: job.data.station,
