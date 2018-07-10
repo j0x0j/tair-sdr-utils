@@ -1,7 +1,7 @@
 const fs = require('fs')
 const kue = require('kue')
 const dotenv = require('dotenv')
-const request = require('request-promise')
+const request = require('request')
 const { prettyLog } = require('./logUtils')
 const jobs = kue.createQueue()
 const aws = require('aws-sdk')
@@ -59,11 +59,7 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
         json: true,
         body
       }
-      request(options)
-        .then(bmpRes => {
-          done()
-        })
-        .catch(bmpErr => { done(bmpErr) })
+      request(options, (bmpErr) => { done(bmpErr) })
     })
   })
 })
