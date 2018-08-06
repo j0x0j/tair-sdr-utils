@@ -39,7 +39,12 @@ const opts = {
   channels: 1
 }
 
+const writeStreamErrorHandler = (writeError) => {
+  console.log('Write Stream Error', writeError.message, new Date())
+}
+
 let ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`, opts)
+ws.on('error', writeStreamErrorHandler)
 
 kue.app.listen(3000)
 
@@ -76,6 +81,7 @@ child1.stdout.on('data', chunk => {
     ws.end()
     // Create new sample file
     ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`, opts)
+    ws.on('error', writeStreamErrorHandler)
   } else {
     ws.write(chunk)
     // Resume stream manually
@@ -84,10 +90,6 @@ child1.stdout.on('data', chunk => {
   // add chunk to redis sorted set: SIGNAL_CACHE for Date.now()
   // This timestamp won't match the ffempeg timestamp exactly but will be close enough for our needs.
   redisClient.zadd('SIGNAL_CACHE', 'NX', Date.now(), chunk.toString('base64'))
-})
-
-ws.on('error', (writeError) => {
-  console.log('Sample', writeError)
 })
 
 // To disable rtl_fm logs
