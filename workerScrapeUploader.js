@@ -1,12 +1,20 @@
 const fs = require('fs')
 const kue = require('kue')
 const dotenv = require('dotenv')
+const config = dotenv.load().parsed
 const { prettyLog } = require('./logUtils')
 const aws = require('aws-sdk')
+
+if (config.AWS_KEY && config.AWS_SECRET) {
+  aws.config.update({
+    accessKeyId: config.AWS_KEY,
+    secretAccessKey: config.AWS_SECRET
+  })
+}
+
 const s3 = new aws.S3({apiVersion: '2006-03-01'})
 const jobs = kue.createQueue()
 
-const config = dotenv.load().parsed
 const CONCURRENT_JOBS = +config.CONCURRENT_JOBS
 const S3_BUCKET = config.S3_BUCKET
 const DEVICE = config.DEVICE
