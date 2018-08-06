@@ -96,6 +96,7 @@ child1.stderr.pipe(process.stderr)
 // pm2 start app.js --kill-timeout 3000
 
 process.on('SIGINT', function () {
-  process.kill(child1.pid, 'SIGKILL')
+  console.log('SIGINT at:', new Date())
+  child1.kill('SIGINT')
   process.exit(0)
 })
