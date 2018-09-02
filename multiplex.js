@@ -14,6 +14,8 @@ const MARKET = config.MARKET
 const SAMPLE_TIME = +config.SAMPLE_TIME
 const STATION = process.env.band || process.argv[2]
 const DEVICE = process.env.device || process.argv[3]
+const SAMPLE_DELAY = 2500
+const START_TIME = Date.now()
 
 if (!STATION || !DEVICE) {
   throw new Error('Needs a station and device index')
@@ -51,20 +53,21 @@ kue.app.listen(3000)
 simple.start()
 
 child1.stdout.on('data', chunk => {
+  const now = Date.now()
   // Pause stream to manage backpressure manually]
   child1.stdout.pause()
   // Define the recurring file stream
   // Get the current timer elapsed time
   let time = simple.time()
-  // If we have enough elapsed time for a sample
-  if (time >= SAMPLE_TIME) {
+  // If SAMPLE_DELAY has passed and SAMPLE_TIME has passed since we started listening
+  if (time >= SAMPLE_DELAY && (now - SAMPLE_TIME) >= START_TIME) {
     // should enqueue a new job
     // with the current timestamp
     jobs.create('sample', {
       title: `${STATION} - Sample ${uuid}`,
       station: STATION,
       market: MARKET,
-      timestamp: Date.now() - SAMPLE_TIME,
+      timestamp: now - SAMPLE_TIME,
       uuid
     }).save()
     // Generate a new sample id

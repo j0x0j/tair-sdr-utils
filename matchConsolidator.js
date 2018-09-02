@@ -13,6 +13,7 @@ const config = dotenv.load().parsed
 const SAMPLE_TIME = +config.SAMPLE_TIME
 // this is the number of milliseconds of audio to include before and after a match
 const MATCH_PADDING = 5000
+const SAMPLE_DELAY = 2500
 
 let possibleMatches = {}
 /*
@@ -54,7 +55,6 @@ function checkForExistingMatch (songId, songStartTime) {
 jobs.process('match-segment', 1, (job, done) => {
   prettyLog('New Match Segment Job for:', job.data.song_name)
   prettyLog(job.data)
-  let timeAccountedFor = 0 // milliseconds
   let songStartTime = Math.round(job.data.timestamp - (job.data.offset_seconds * 1000))
   let songStartTimeString = songStartTime.toString()
   let possibleMatch = checkForExistingMatch(job.data.song_id, songStartTime)
@@ -91,19 +91,39 @@ jobs.process('match-segment', 1, (job, done) => {
     prettyLog('Segment count is: ' + segmentCount)
     // after 2 sample times,
     setTimeout(() => {
+      let timeAccountedFor = 0 // milliseconds
       prettyLog('After the timeout:')
       // check that no new segments have come in for this possibleMatch
       if (possibleMatch.segments.length === segmentCount) {
         prettyLog('No more segments have been added')
+        // timeAccountedFor calculation needs to take into account overlapping samples
+        const songDuration = job.data.song_duration * 1000
+        let verifiedStartTime;
+        let verifiedEndTime;
+
         // check if we have enough time accounted for
         possibleMatch.segments.forEach((segment) => {
-          if (segment.offset_seconds * 1000 <= 0) {
-            // this means the sample starts before the song starts. offset_seconds should be negative.
-            timeAccountedFor += (SAMPLE_TIME + (segment.offset_seconds * 1000))
+          const offset = segment.offset_seconds * 1000
+           // this is for when the sample starts before the song starts:
+          let startTime = segment.timestamp - Math.min(offset, 0)
+           // this is for when the song ends before the sample ends:
+          let endTime = segment.timestamp + Math.min(SAMPLE_TIME, (songDuration - offset))
+          if (!verifiedStartTime) {
+            verifiedStartTime = startTime
+            verifiedEndTime = endTime
           } else {
-            // this means the song ends before the sample ends or the sample is entirely in the song
-            timeAccountedFor += Math.min(SAMPLE_TIME, ((job.data.song_duration - segment.offset_seconds) * 1000))
+            const validStart = startTime > verifiedStartTime && startTime < verifiedEndTime
+            const validEnd = endTime > verifiedEndTime
+            if (validStart && validEnd) {
+              verifiedEndTime = endTime
+            } else {
+              prettyLog('found a confidence discontinuity. This is not a continuous match')
+              // Not a continuous match
+              timeAccountedFor = 0
+              break
+            }
           }
+          timeAccountedFor = verifiedEndTime - verifiedStartTime
         })
 
         prettyLog('time accounted for is: ' + timeAccountedFor)
