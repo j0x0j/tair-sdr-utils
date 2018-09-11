@@ -38,6 +38,7 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
         // it's a match, add a match segment to the job queue
         let segmentData = {
           song_id: dejavuData.song_id,
+          creative: dejavuData.creative_id,
           song_name: dejavuData.song_name,
           song_duration: dejavuData.song_duration,
           offset_seconds: dejavuData.offset_seconds,

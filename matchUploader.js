@@ -47,10 +47,10 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
       const body = {
         station: job.data.station,
         market: job.data.market,
-        creativeName: job.data.song_name,
-        creativeId: job.data.song_id,
+        creative: job.data.creative,
         filePath: s3Path,
-        createdAt: job.data.timestamp
+        timestamp: job.data.timestamp,
+        nodeName: DEVICE
       }
       const options = {
         method: 'POST',

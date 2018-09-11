@@ -158,6 +158,7 @@ jobs.process('match-segment', 1, (job, done) => {
               prettyLog(`Created local match file: ./matches/match_${uuid}.wav for:`, possibleMatch.song_name)
               jobs.create('match', {
                 song_id: possibleMatch.song_id,
+                creative: possibleMatch.creative,
                 song_name: possibleMatch.song_name,
                 station: possibleMatch.station,
                 market: possibleMatch.market,
