@@ -56,7 +56,7 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
       }
       const options = {
         method: 'POST',
-        uri: `http://${BMP_HOST}/log`,
+        uri: `http://${BMP_HOST}/api/match`,
         resolveWithFullResponse: true,
         json: true,
         body
