@@ -1,7 +1,7 @@
 const fs = require('fs')
 const kue = require('kue')
 const dotenv = require('dotenv')
-const request = require('request-promise')
+const request = require('request')
 const path = require('path')
 const { prettyLog } = require('./logUtils')
 const jobs = kue.createQueue()
@@ -34,7 +34,7 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
     ) {
       // is a match, should do further processing
       // Log to local file before filtering
-      log.write(`${job.data.uuid}` + '\n')
+      log.write(`${job.data.uuid};${data.confidence};${data.song_name}` + '\n')
       done()
     } else {
       console.log('Didn\'t match')

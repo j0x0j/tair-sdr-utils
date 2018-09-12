@@ -22,6 +22,8 @@ const BMP_HOST = 'bmp.tair.network'
 
 jobs.process('match', CONCURRENT_JOBS, (job, done) => {
   prettyLog('New match Job:', job.data.uuid)
+  // Handle failure backoff
+  job.attempts(3).backoff({ type: 'exponential' })
   const s3Path = 'devices/' + DEVICE + '/' + job.data.station + '/matches/' + `match_${job.data.song_id}_${job.data.timestamp}.wav`
   const s3Params = {
     ACL: 'public-read',

@@ -15,6 +15,8 @@ const DEJAVU_HOST = 'dejavu.tair.network'
 
 jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
   prettyLog('New Sample Job:', job.data.uuid)
+  // Handle failure backoff
+  job.attempts(3).backoff({ type: 'exponential' })
   const SAMPLE_PATH = path.join(__dirname, `/samples/sample_${job.data.uuid}.wav`)
   const options = {
     method: 'POST',
@@ -24,8 +26,12 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
     }
   }
   request(options, (err, res, body) => {
-    if (err) throw err
-    const dejavuJson = JSON.parse(body)
+    if (err) return done(err)
+    try {
+      var dejavuJson = JSON.parse(body)
+    } catch (jsonParseError) {
+      return done(jsonParseError)
+    }
     const possibleMatches = []
     possibleMatches.push(dejavuJson)
     if (dejavuJson['fallback_matches']) {

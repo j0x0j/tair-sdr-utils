@@ -12,3 +12,4 @@ pm2.json
 /matches.log
 /matches-*
 .DS_Store
+/samples-*
