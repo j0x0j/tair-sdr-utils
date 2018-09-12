@@ -3,22 +3,22 @@
     {
       "exec_mode": "fork_mode",
       "script": "./multiplexScraper.js",
-      "name": "multi-0",
+      "name": "scraper-0",
       "node_args": [],
       "env": {
         "band": "101.1M",
         "device": "1"
       },
-      "error_file": "./logs/multi-0.err.log",
-      "out_file": "./logs/multi-0.out.log"
+      "error_file": "./logs/scraper-0.err.log",
+      "out_file": "./logs/scraper-0.out.log"
     }, {
       "exec_mode": "fork_mode",
       "script": "./workerScrapeUploader.js",
-      "name": "multi-1",
+      "name": "scraper-1",
       "node_args": [],
       "env": {},
-      "error_file": "./logs/multi-1.err.log",
-      "out_file": "./logs/multi-1.out.log"
+      "error_file": "./logs/scraper-1.err.log",
+      "out_file": "./logs/scraper-1.out.log"
     }
   ]
 }
