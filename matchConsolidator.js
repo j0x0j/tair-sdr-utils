@@ -120,7 +120,7 @@ jobs.process('match-segment', 1, (job, done) => {
               prettyLog('found a confidence discontinuity. This is not a continuous match')
               // Not a continuous match
               timeAccountedFor = 0
-              break
+              return
             }
           }
           timeAccountedFor = verifiedEndTime - verifiedStartTime
