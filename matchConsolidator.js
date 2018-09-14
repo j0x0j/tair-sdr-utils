@@ -13,7 +13,7 @@ const config = dotenv.load().parsed
 const SAMPLE_TIME = +config.SAMPLE_TIME
 // this is the number of milliseconds of audio to include before and after a match
 const MATCH_PADDING = 5000
-const SAMPLE_DELAY = 2500
+// const SAMPLE_DELAY = 2500
 
 let possibleMatches = {}
 /*
@@ -77,6 +77,7 @@ jobs.process('match-segment', 1, (job, done) => {
         song_duration: job.data.song_duration,
         station: job.data.station,
         market: job.data.market,
+        creative: job.data.creative,
         segments: []
       }
       possibleMatch = possibleMatches[job.data.song_id][songStartTimeString]
@@ -98,8 +99,8 @@ jobs.process('match-segment', 1, (job, done) => {
         prettyLog('No more segments have been added')
         // timeAccountedFor calculation needs to take into account overlapping samples
         const songDuration = job.data.song_duration * 1000
-        let verifiedStartTime;
-        let verifiedEndTime;
+        let verifiedStartTime
+        let verifiedEndTime
 
         // check if we have enough time accounted for
         possibleMatch.segments.forEach((segment) => {

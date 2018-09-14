@@ -34,7 +34,7 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
     }
     const possibleMatches = []
     possibleMatches.push(dejavuJson)
-    if (dejavuJson['fallback_matches']) {
+    if (dejavuJson && dejavuJson['fallback_matches']) {
       possibleMatches.concat(dejavuJson['fallback_matches'])
     }
     possibleMatches.forEach((dejavuData) => {

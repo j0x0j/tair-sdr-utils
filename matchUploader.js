@@ -51,7 +51,7 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
         market: job.data.market,
         creative: job.data.creative,
         filePath: s3Path,
-        timestamp: job.data.timestamp,
+        timestamp: new Date(job.data.timestamp).toISOString(),
         nodeName: DEVICE
       }
       const options = {
