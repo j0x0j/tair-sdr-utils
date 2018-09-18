@@ -103,5 +103,4 @@ child1.stderr.pipe(process.stderr)
 process.on('SIGINT', function () {
   console.log('SIGINT at:', new Date())
   child1.kill('SIGINT')
-  process.exit(0)
 })
