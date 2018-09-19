@@ -15,8 +15,6 @@ const DEJAVU_HOST = 'dejavu.tair.network'
 
 jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
   prettyLog('New Sample Job:', job.data.uuid)
-  // Handle failure backoff
-  job.attempts(3).backoff({ type: 'exponential' })
   const SAMPLE_PATH = path.join(__dirname, `/samples/sample_${job.data.uuid}.wav`)
   const options = {
     method: 'POST',
