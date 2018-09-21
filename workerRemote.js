@@ -13,6 +13,10 @@ const ACCEPTED_CONFIDENCE = +config.ACCEPTED_CONFIDENCE
 const CONCURRENT_JOBS = +config.CONCURRENT_JOBS
 const DEJAVU_HOST = 'dejavu.tair.network'
 
+const cleanUpSampleFile = (samplePath, done, err) => {
+  fs.unlink(samplePath, (err) => { done(err) })
+}
+
 jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
   prettyLog('New Sample Job:', job.data.uuid)
   const SAMPLE_PATH = path.join(__dirname, `/samples/sample_${job.data.uuid}.wav`)
@@ -24,11 +28,13 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
     }
   }
   request(options, (err, res, body) => {
-    if (err) return done(err)
+    if (err) {
+      return cleanUpSampleFile(SAMPLE_PATH, done, err)
+    }
     try {
       var dejavuJson = JSON.parse(body)
     } catch (jsonParseError) {
-      return done(jsonParseError)
+      return cleanUpSampleFile(SAMPLE_PATH, done, jsonParseError)
     }
     const possibleMatches = []
     possibleMatches.push(dejavuJson)
@@ -55,8 +61,6 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
         log.write(`${job.data.stn};${dejavuData.confidence};${dejavuData.song_name};${job.data.uuid};${job.data.timestamp}` + '\n')
       }
     })
-    fs.unlink(SAMPLE_PATH, (err) => {
-      done(err)
-    })
+    cleanUpSampleFile(SAMPLE_PATH, done)
   })
 })
