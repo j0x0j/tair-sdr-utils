@@ -57,7 +57,7 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
           market: job.data.market,
           uuid: uuidv4()
         }
-        jobs.create('match-segment', segmentData).save()
+        jobs.create('match-segment', segmentData).removeOnComplete(true).save()
         log.write(`${job.data.stn};${dejavuData.confidence};${dejavuData.song_name};${job.data.uuid};${job.data.timestamp}` + '\n')
       }
     })

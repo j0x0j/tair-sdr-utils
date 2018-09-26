@@ -69,7 +69,7 @@ child1.stdout.on('data', chunk => {
       market: MARKET,
       timestamp: now - SAMPLE_TIME,
       uuid
-    }).save()
+    }).removeOnComplete(true).save()
     // Generate a new sample id
     uuid = uuidv4()
     // Reset timer
