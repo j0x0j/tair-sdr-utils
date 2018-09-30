@@ -66,7 +66,7 @@ child2.stdout.on('data', chunk => {
       stn: STATION,
       timestamp: ts.toISOString(),
       uuid
-    }).save()
+    }).removeOnComplete(true).save()
     uuid = uuidv4()
     simple.reset().start()
     ws.end()

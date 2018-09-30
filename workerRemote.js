@@ -42,7 +42,7 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
       possibleMatches.concat(dejavuJson['fallback_matches'])
     }
     possibleMatches.forEach((dejavuData) => {
-      prettyLog('dejavu confidence is:', dejavuData.confidence)
+      prettyLog('dejavu confidence is:', dejavuData && dejavuData.confidence)
       if (dejavuData && dejavuData.confidence && dejavuData.confidence >= ACCEPTED_CONFIDENCE) {
         prettyLog('dejavu confidence passed threshold of:', ACCEPTED_CONFIDENCE)
         // it's a match, add a match segment to the job queue
