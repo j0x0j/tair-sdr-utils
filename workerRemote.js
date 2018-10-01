@@ -12,9 +12,26 @@ const config = dotenv.load().parsed
 const ACCEPTED_CONFIDENCE = +config.ACCEPTED_CONFIDENCE
 const CONCURRENT_JOBS = +config.CONCURRENT_JOBS
 const DEJAVU_HOST = 'dejavu.tair.network'
+let NO_CONNECTION = false
 
 const cleanUpSampleFile = (samplePath, done, err) => {
   fs.unlink(samplePath, (err) => { done(err) })
+}
+
+const heartbeat = (timeout = 5000) => {
+  request({
+    method: 'GET',
+    uri: `http://${DEJAVU_HOST}/health`,
+    json: true,
+    timeout
+  }, (err, res, body) => {
+    if (err) {
+      NO_CONNECTION = true
+    }
+    if (body && body.status === 'OK') {
+      NO_CONNECTION = false
+    }
+  })
 }
 
 jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
@@ -26,6 +43,9 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
     formData: {
       file: fs.createReadStream(SAMPLE_PATH)
     }
+  }
+  if (NO_CONNECTION) {
+    return cleanUpSampleFile(SAMPLE_PATH, done, new Error('Remote service not available'))
   }
   request(options, (err, res, body) => {
     if (err) {
@@ -64,3 +84,6 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
     cleanUpSampleFile(SAMPLE_PATH, done)
   })
 })
+
+// Start Heartbeat
+setInterval(heartbeat, 5000)
