@@ -87,3 +87,6 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
 
 // Start Heartbeat
 setInterval(heartbeat, 5000)
+
+// Start Queue Server
+kue.app.listen(3000)
