@@ -3,59 +3,50 @@
     {
       "exec_mode": "fork_mode",
       "script": "./multiplex.js",
-      "name": "multi-0",
+      "name": "multiplex-01",
       "node_args": [],
       "env": {
-        "band": "94.7M",
+        "band": "101.1M",
         "device": "0"
       },
-      "error_file": "./logs/multi-0.err.log",
-      "out_file": "./logs/multi-0.out.log"
-    },
-    {
-      "exec_mode": "fork_mode",
-      "script": "./multiplex.js",
-      "name": "multi-1",
-      "node_args": [],
-      "env": {
-        "band": "93.7M",
-        "device": "1"
-      },
-      "error_file": "./logs/multi-1.err.log",
-      "out_file": "./logs/multi-1.out.log"
-    },
-    {
-      "exec_mode": "fork_mode",
-      "script": "./multiplex.js",
-      "name": "multi-2",
-      "node_args": [],
-      "env": {
-        "band": "104.7M",
-        "device": "2"
-      },
-      "error_file": "./logs/multi-2.err.log",
-      "out_file": "./logs/multi-2.out.log"
-    },
-    {
-      "exec_mode": "fork_mode",
-      "script": "./multiplex.js",
-      "name": "multi-3",
-      "node_args": [],
-      "env": {
-        "band": "106.9M",
-        "device": "3"
-      },
-      "error_file": "./logs/multi-3.err.log",
-      "out_file": "./logs/multi-3.out.log"
+      "error_file": "./logs/multiplex-01.err.log",
+      "out_file": "./logs/multiplex-01.out.log"
     },
     {
       "exec_mode": "fork_mode",
       "script": "./workerRemote.js",
-      "name": "multi-4",
+      "name": "worker-remote",
       "node_args": [],
       "env": {},
-      "error_file": "./logs/multi-4.err.log",
-      "out_file": "./logs/multi-4.out.log"
-    }
+      "error_file": "./logs/worker-remote.err.log",
+      "out_file": "./logs/worker-remote.out.log"
+    },
+    {
+      "exec_mode": "fork_mode",
+      "script": "./matchConsolidator.js",
+      "name": "match-consolidator",
+      "node_args": [],
+      "env": {},
+      "error_file": "./logs/match-consolidator.err.log",
+      "out_file": "./logs/match-consolidator.out.log"
+    },
+    {
+      "exec_mode": "fork_mode",
+      "script": "./signalCacheCleaner.js",
+      "name": "signal-cache-cleaner",
+      "node_args": [],
+      "env": {},
+      "error_file": "./logs/signal-cache-cleaner.err.log",
+      "out_file": "./logs/signal-cache-cleaner.out.log"
+    },
+    {
+      "exec_mode": "fork_mode",
+      "script": "./matchUploader.js",
+      "name": "match-uploader",
+      "node_args": [],
+      "env": {},
+      "error_file": "./logs/match-uploader.err.log",
+      "out_file": "./logs/match-uploader.out.log"
+    },
   ]
 }

@@ -14,8 +14,6 @@ const MARKET = config.MARKET
 const SAMPLE_TIME = +config.SAMPLE_TIME
 const STATION = process.env.band || process.argv[2]
 const DEVICE = process.env.device || process.argv[3]
-const SAMPLE_DELAY = 2500
-const START_TIME = Date.now()
 
 if (!STATION || !DEVICE) {
   throw new Error('Needs a station and device index')
@@ -48,8 +46,6 @@ const writeStreamErrorHandler = (writeError) => {
 let ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`, opts)
 ws.on('error', writeStreamErrorHandler)
 
-kue.app.listen(3000)
-
 simple.start()
 
 child1.stdout.on('data', chunk => {
@@ -59,8 +55,7 @@ child1.stdout.on('data', chunk => {
   // Define the recurring file stream
   // Get the current timer elapsed time
   let time = simple.time()
-  // If SAMPLE_DELAY has passed and SAMPLE_TIME has passed since we started listening
-  if (time >= SAMPLE_DELAY && (now - SAMPLE_TIME) >= START_TIME) {
+  if (time >= SAMPLE_TIME) {
     // should enqueue a new job
     // with the current timestamp
     jobs.create('sample', {
@@ -69,7 +64,7 @@ child1.stdout.on('data', chunk => {
       market: MARKET,
       timestamp: now - SAMPLE_TIME,
       uuid
-    }).save()
+    }).removeOnComplete(true).save()
     // Generate a new sample id
     uuid = uuidv4()
     // Reset timer
@@ -103,5 +98,4 @@ child1.stderr.pipe(process.stderr)
 process.on('SIGINT', function () {
   console.log('SIGINT at:', new Date())
   child1.kill('SIGINT')
-  process.exit(0)
 })

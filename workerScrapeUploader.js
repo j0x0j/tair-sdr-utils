@@ -41,5 +41,3 @@ jobs.process('scrape', CONCURRENT_JOBS, (job, done) => {
     })
   })
 })
-
-kue.app.listen(3000)

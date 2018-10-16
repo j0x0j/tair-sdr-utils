@@ -22,6 +22,8 @@ const BMP_HOST = 'bmp.tair.network'
 
 jobs.process('match', CONCURRENT_JOBS, (job, done) => {
   prettyLog('New match Job:', job.data.uuid)
+  // Handle failure backoff
+  job.attempts(3).backoff({ type: 'exponential' })
   const s3Path = 'devices/' + DEVICE + '/' + job.data.station + '/matches/' + `match_${job.data.song_id}_${job.data.timestamp}.wav`
   const s3Params = {
     ACL: 'public-read',
@@ -49,12 +51,12 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
         market: job.data.market,
         creative: job.data.creative,
         filePath: s3Path,
-        timestamp: job.data.timestamp,
+        timestamp: new Date(job.data.timestamp).toISOString(),
         nodeName: DEVICE
       }
       const options = {
         method: 'POST',
-        uri: `http://${BMP_HOST}/log`,
+        uri: `http://${BMP_HOST}/api/match`,
         resolveWithFullResponse: true,
         json: true,
         body
