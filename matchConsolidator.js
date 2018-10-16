@@ -18,34 +18,39 @@ const SAMPLE_DELAY = 2500
 let possibleMatches = {}
 /*
 possibleMatches = {
-    <song_id>: {
-      <song_start_time_string> : {
-        song_id: <song_id>,
-        song_name: <song_name>,
-        song_start_time: <millisecond song_start_time>
-        song_duration: <song_duration>,
-        station: <station>,
-        segments: [
-          {
-            uuid: <uuid>,
-            offset_seconds: <offset_seconds>,
-            timestamp: <millisecond timestamp>
-          },
-          ...
-        ]
+  <market>: {
+    <station>: {
+      <song_id>: {
+        <song_start_time_string> : {
+          song_id: <song_id>,
+          song_name: <song_name>,
+          song_start_time: <millisecond song_start_time>
+          song_duration: <song_duration>,
+          segments: [
+            {
+              uuid: <uuid>,
+              offset_seconds: <offset_seconds>,
+              timestamp: <millisecond timestamp>
+            },
+            ...
+          ]
+        },
+        ...
       },
       ...
     },
     ...
-  }
+  },
+  ...
+}
 */
 
-function checkForExistingMatch (songId, songStartTime) {
-  if (possibleMatches[songId]) {
-    for (var songStartTimeString in possibleMatches[songId]) {
+function checkForExistingMatch (market, station, songId, songStartTime) {
+  if (possibleMatches[market] && possibleMatches[market][station] && possibleMatches[market][station][songId]) {
+    for (var songStartTimeString in possibleMatches[market][station][songId]) {
       let existingStartTime = parseInt(songStartTimeString)
       if (Math.abs(existingStartTime - songStartTime) < SAMPLE_TIME) {
-        return possibleMatches[songId][songStartTimeString]
+        return possibleMatches[market][station][songId][songStartTimeString]
       }
     }
   }
@@ -57,7 +62,7 @@ jobs.process('match-segment', 1, (job, done) => {
   prettyLog(job.data)
   let songStartTime = Math.round(job.data.timestamp - (job.data.offset_seconds * 1000))
   let songStartTimeString = songStartTime.toString()
-  let possibleMatch = checkForExistingMatch(job.data.song_id, songStartTime)
+  let possibleMatch = checkForExistingMatch(job.data.market, job.data.station, job.data.song_id, songStartTime)
   // missingTimeLimit is the limit for missing matched audio duration.
   // if we get a match for a song that is already missing too much matched time, it is not a match.
   // for example, we could just be hearing a clip of a song being used in an ad.
@@ -67,10 +72,16 @@ jobs.process('match-segment', 1, (job, done) => {
   // Don't add possible matches if there is already more missing time than allowed to verify a match
   if (possibleMatch || job.data.offset_seconds * 1000 < missingTimeLimit) {
     if (!possibleMatch) {
-      if (!possibleMatches[job.data.song_id]) {
-        possibleMatches[job.data.song_id] = {}
+      if (!possibleMatches[job.data.market]) {
+        possibleMatches[job.data.market] = {}
       }
-      possibleMatches[job.data.song_id][songStartTimeString] = {
+      if (!possibleMatches[job.data.market][job.data.station]) {
+        possibleMatches[job.data.market][job.data.station] = {}
+      }
+      if (!possibleMatches[job.data.market][job.data.station][job.data.song_id]) {
+        possibleMatches[job.data.market][job.data.station][job.data.song_id] = {}
+      }
+      possibleMatches[job.data.market][job.data.station][job.data.song_id][songStartTimeString] = {
         song_id: job.data.song_id,
         song_name: job.data.song_name,
         song_start_time: songStartTime,
@@ -79,7 +90,7 @@ jobs.process('match-segment', 1, (job, done) => {
         market: job.data.market,
         segments: []
       }
-      possibleMatch = possibleMatches[job.data.song_id][songStartTimeString]
+      possibleMatch = possibleMatches[job.data.market][job.data.station][job.data.song_id][songStartTimeString]
     }
 
     possibleMatch.segments.push({
@@ -139,7 +150,7 @@ jobs.process('match-segment', 1, (job, done) => {
           prettyLog('paddedEndTime: ' + paddedEndTime)
           prettyLog('duration: ' + (paddedEndTime - paddedStartTime))
 
-          redisClient.zrangebyscore('SIGNAL_CACHE', paddedStartTime, paddedEndTime, (err, chunkStrings) => {
+          redisClient.zrangebyscore(`SIGNAL_CACHE_${possibleMatch.station.replace(/ /g,'')}`, paddedStartTime, paddedEndTime, (err, chunkStrings) => {
             if (err) {
               prettyLog('Error running zrange for:', possibleMatch.song_name)
               prettyLog(err)
