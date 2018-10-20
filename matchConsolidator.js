@@ -13,7 +13,6 @@ const config = dotenv.load().parsed
 const SAMPLE_TIME = +config.SAMPLE_TIME
 // this is the number of milliseconds of audio to include before and after a match
 const MATCH_PADDING = 5000
-// const SAMPLE_DELAY = 2500
 
 let possibleMatches = {}
 /*
@@ -81,7 +80,7 @@ jobs.process('match-segment', 1, (job, done) => {
       if (!possibleMatches[job.data.market][job.data.station][job.data.song_id]) {
         possibleMatches[job.data.market][job.data.station][job.data.song_id] = {}
       }
-      possibleMatches[job.data.market][job.data.station][job.data.song_id][songStartTimeString] = {
+      possibleMatch = possibleMatches[job.data.market][job.data.station][job.data.song_id][songStartTimeString] = {
         song_id: job.data.song_id,
         song_name: job.data.song_name,
         song_start_time: songStartTime,
@@ -91,7 +90,6 @@ jobs.process('match-segment', 1, (job, done) => {
         creative: job.data.creative,
         segments: []
       }
-      possibleMatch = possibleMatches[job.data.market][job.data.station][job.data.song_id][songStartTimeString]
     }
 
     possibleMatch.segments.push({
@@ -108,26 +106,61 @@ jobs.process('match-segment', 1, (job, done) => {
       // check that no new segments have come in for this possibleMatch
       if (possibleMatch.segments.length === segmentCount) {
         prettyLog('No more segments have been added')
-        // timeAccountedFor calculation needs to take into account overlapping samples
-        const songDuration = job.data.song_duration * 1000
+        const spotDuration = job.data.song_duration * 1000
+
+        // verifiedStartTime & verifiedEndTime will define the range of time accounted for in this spot
         let verifiedStartTime
         let verifiedEndTime
 
-        // check if we have enough time accounted for
+        // ASSUMPTION: the segments are in chronological order.
+        // we will attempt to create an uninterrupted verified time range for the duration of the spot,
+        // one segment at a time to see how much of the spot we have accounted for
         possibleMatch.segments.forEach((segment) => {
-          const offset = segment.offset_seconds * 1000
-           // this is for when the sample starts before the song starts:
-          let startTime = segment.timestamp - Math.min(offset, 0)
-           // this is for when the song ends before the sample ends:
-          let endTime = segment.timestamp + Math.min(SAMPLE_TIME, (songDuration - offset))
+
+          // segmentOffset (ms) is the start time of this segment minus the start time of the entire spot
+          // it is negative when the segment begins before the spot, and positive when it begins after the spot begins
+          // it is zero if both the segment and the spot start at the same time
+          const segmentOffset = segment.offset_seconds * 1000
+
+          // spotStartTime (ms) is when the entire spot begins
+          const spotStartTime = segment.timestamp - segmentOffset
+
+          // spotEndTime (ms) is when the entire spot ends
+          const spotEndTime = spotStartTime + spotDuration
+
+          // segmentStartTime (ms) is the time when the segment begins to contain part of the spot
+          let segmentStartTime = segment.timestamp
+
+          // if the segment starts before the spot, the beginning of the segment will not contain spot audio
+          // this means the segmentStartTime will be greater than segment.timestamp
+          if (segmentOffset < 0) {
+            segmentStartTime -= segmentOffset
+          }
+
+          // segmentEndTime (ms) is the time when the segment stops containing part of the spot
+          let segmentEndTime = segment.timestamp + SAMPLE_TIME
+
+          // if the segment ends before the spot ends, the end of the segment will not contain spot audio
+          // this means the segmentEndTime will be before the segment audio ends
+          if (spotEndTime < segmentEndTime) {
+            segmentEndTime = spotEndTime
+          }
+
           if (!verifiedStartTime) {
-            verifiedStartTime = startTime
-            verifiedEndTime = endTime
+            // if verifiedStartTime has not been defined, that means this is the first segment for this spot.
+            // we can just set the segment's start and end times as the verified start and end times
+            verifiedStartTime = segmentStartTime
+            verifiedEndTime = segmentEndTime
           } else {
-            const validStart = startTime > verifiedStartTime && startTime < verifiedEndTime
-            const validEnd = endTime > verifiedEndTime
+            // since verifiedStartTime is defined,
+            // this segment must start after verifiedStartTime and before segmentEndTime
+            const validStart = segmentStartTime > verifiedStartTime && segmentStartTime < spotEndTime
+            // and this segment must end after verifiedEndTime
+            const validEnd = segmentEndTime > verifiedEndTime
+
             if (validStart && validEnd) {
-              verifiedEndTime = endTime
+              // if this segment is valid, we update the verifiedEndTime to be this segment's segmentEndTime
+              verifiedEndTime = segmentEndTime
             } else {
               prettyLog('found a confidence discontinuity. This is not a continuous match')
               // Not a continuous match
@@ -135,7 +168,8 @@ jobs.process('match-segment', 1, (job, done) => {
               return
             }
           }
-          timeAccountedFor = verifiedEndTime - verifiedStartTime
+          // we add this segment's verified spot time to the timeAccountedFor
+          timeAccountedFor += (segmentEndTime - segmentStartTime)
         })
 
         prettyLog('time accounted for is: ' + timeAccountedFor)
@@ -164,7 +198,7 @@ jobs.process('match-segment', 1, (job, done) => {
               ws.write(Buffer.from(chunkString, 'base64'))
             })
             ws.on('error', (writeError) => {
-              delete possibleMatches[job.data.song_id][songStartTimeString]
+              delete possibleMatches[job.data.market][job.data.station][job.data.song_id][songStartTimeString]
             })
             ws.on('end', () => {
               prettyLog(`Created local match file: ./matches/match_${uuid}.wav for:`, possibleMatch.song_name)
@@ -179,12 +213,12 @@ jobs.process('match-segment', 1, (job, done) => {
                 uuid
               }).save()
               // clear possibleMatches
-              delete possibleMatches[job.data.song_id][songStartTimeString]
+              delete possibleMatches[job.data.market][job.data.station][job.data.song_id][songStartTimeString]
             })
             ws.end()
           })
         } else {
-          delete possibleMatches[job.data.song_id][songStartTimeString]
+          delete possibleMatches[job.data.market][job.data.station][job.data.song_id][songStartTimeString]
         }
       }
     }, SAMPLE_TIME * 2)
