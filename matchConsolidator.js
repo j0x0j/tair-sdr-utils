@@ -4,8 +4,7 @@ const wav = require('wav')
 const dotenv = require('dotenv')
 const { prettyLog } = require('./logUtils')
 const jobs = kue.createQueue()
-const redis = require('redis')
-const redisClient = redis.createClient()
+const redisClient = jobs.client
 
 const config = dotenv.load().parsed
 // const CONCURRENT_JOBS = +config.CONCURRENT_JOBS
@@ -185,7 +184,7 @@ jobs.process('match-segment', 1, (job, done) => {
           prettyLog('paddedEndTime: ' + paddedEndTime)
           prettyLog('duration: ' + (paddedEndTime - paddedStartTime))
 
-          redisClient.zrangebyscore(`SIGNAL_CACHE_${possibleMatch.station.replace(/ /g,'')}`, paddedStartTime, paddedEndTime, (err, chunkStrings) => {
+          redisClient.zrangebyscore(`SIGNAL_CACHE_${possibleMatch.station.replace(/ /g, '')}`, paddedStartTime, paddedEndTime, (err, chunkStrings) => {
             if (err) {
               prettyLog('Error running zrange for:', possibleMatch.song_name)
               prettyLog(err)
@@ -224,4 +223,9 @@ jobs.process('match-segment', 1, (job, done) => {
     }, SAMPLE_TIME * 2)
   }
   done()
+})
+
+jobs.on('error', err => {
+  console.log('KUE ERROR at:', new Date())
+  console.error(err)
 })

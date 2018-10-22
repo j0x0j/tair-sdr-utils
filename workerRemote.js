@@ -37,11 +37,13 @@ const heartbeat = (timeout = 5000) => {
 jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
   prettyLog('New Sample Job:', job.data.uuid)
   const SAMPLE_PATH = path.join(__dirname, `/samples/sample_${job.data.uuid}.wav`)
+  const sampleReadStream = fs.createReadStream(SAMPLE_PATH)
+  sampleReadStream.on('error', err => { done(err) })
   const options = {
     method: 'POST',
     uri: `http://${DEJAVU_HOST}/sample`,
     formData: {
-      file: fs.createReadStream(SAMPLE_PATH)
+      file: sampleReadStream
     }
   }
   if (NO_CONNECTION) {

@@ -4,8 +4,7 @@ const wav = require('wav')
 const kue = require('kue')
 const jobs = kue.createQueue()
 const dotenv = require('dotenv')
-const redis = require('redis')
-const redisClient = redis.createClient()
+const redisClient = jobs.client
 const simpleTimer = require('node-timers/simple')
 const simple = simpleTimer({ pollInterval: 100 })
 
@@ -87,13 +86,19 @@ child1.stdout.on('data', chunk => {
   }
   // add chunk to redis sorted set: SIGNAL_CACHE for Date.now()
   // This timestamp won't match the ffempeg timestamp exactly but will be close enough for our needs.
-  redisClient.zadd(`SIGNAL_CACHE_${STATION.replace(/ /g,'')}`, 'NX', Date.now(), chunk.toString('base64'))
+  redisClient.zadd(`SIGNAL_CACHE_${STATION.replace(/ /g, '')}`, 'NX', Date.now(), chunk.toString('base64'))
 })
 
 // To disable rtl_fm logs
 child1.stderr.pipe(process.stderr)
 
 // pm2 start app.js --kill-timeout 3000
+
+jobs.on('error', err => {
+  console.log('KUE ERROR at:', new Date())
+  console.error(err)
+  child1.kill('SIGINT')
+})
 
 process.on('SIGINT', function () {
   console.log('SIGINT at:', new Date())
