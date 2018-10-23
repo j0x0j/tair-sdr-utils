@@ -55,7 +55,19 @@ child1.stdout.on('data', chunk => {
   // Get the current timer elapsed time
   let time = simple.time()
   if (time >= SAMPLE_TIME) {
+    // Should only create a job after write stream ends
+    // need the previous identifier to create the job
+    // on async write stream end
+    const prevuuid = uuid
     ws.on('end', () => {
+      // Should enqueue a new job with the current timestamp
+      jobs.create('sample', {
+        title: `${STATION} - Sample ${prevuuid}`,
+        station: STATION,
+        market: MARKET,
+        timestamp: now - SAMPLE_TIME,
+        uuid: prevuuid
+      }).removeOnComplete(true).save()
       // Only write after previous stream has ended
       ws.write(chunk)
       // Resume stream manually
@@ -63,15 +75,6 @@ child1.stdout.on('data', chunk => {
     })
     // Close the current stream
     ws.end()
-    // should enqueue a new job
-    // with the current timestamp
-    jobs.create('sample', {
-      title: `${STATION} - Sample ${uuid}`,
-      station: STATION,
-      market: MARKET,
-      timestamp: now - SAMPLE_TIME,
-      uuid
-    }).removeOnComplete(true).save()
     // Generate a new sample id
     uuid = uuidv4()
     // Reset timer
