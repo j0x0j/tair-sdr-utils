@@ -55,6 +55,14 @@ child1.stdout.on('data', chunk => {
   // Get the current timer elapsed time
   let time = simple.time()
   if (time >= SAMPLE_TIME) {
+    ws.on('end', () => {
+      // Only write after previous stream has ended
+      ws.write(chunk)
+      // Resume stream manually
+      child1.stdout.resume()
+    })
+    // Close the current stream
+    ws.end()
     // should enqueue a new job
     // with the current timestamp
     jobs.create('sample', {
@@ -68,14 +76,6 @@ child1.stdout.on('data', chunk => {
     uuid = uuidv4()
     // Reset timer
     simple.reset().start()
-    ws.on('end', () => {
-      // Only write after previous stream has ended
-      ws.write(chunk)
-      // Resume stream manually
-      child1.stdout.resume()
-    })
-    // Close the current stream
-    ws.end()
     // Create new sample file
     ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`, opts)
     ws.on('error', writeStreamErrorHandler)

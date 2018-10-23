@@ -115,7 +115,6 @@ jobs.process('match-segment', 1, (job, done) => {
         // we will attempt to create an uninterrupted verified time range for the duration of the spot,
         // one segment at a time to see how much of the spot we have accounted for
         possibleMatch.segments.forEach((segment) => {
-
           // segmentOffset (ms) is the start time of this segment minus the start time of the entire spot
           // it is negative when the segment begins before the spot, and positive when it begins after the spot begins
           // it is zero if both the segment and the spot start at the same time
