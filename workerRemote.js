@@ -37,6 +37,9 @@ const heartbeat = (timeout = 5000) => {
 jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
   prettyLog('New Sample Job:', job.data.uuid)
   const SAMPLE_PATH = path.join(__dirname, `/samples/sample_${job.data.uuid}.wav`)
+  if (NO_CONNECTION) {
+    return cleanUpSampleFile(SAMPLE_PATH, done, new Error('Remote service not available'))
+  }
   const sampleReadStream = fs.createReadStream(SAMPLE_PATH)
   sampleReadStream.on('error', err => { done(err) })
   const options = {
@@ -45,9 +48,6 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
     formData: {
       file: sampleReadStream
     }
-  }
-  if (NO_CONNECTION) {
-    return cleanUpSampleFile(SAMPLE_PATH, done, new Error('Remote service not available'))
   }
   request(options, (err, res, body) => {
     if (err) {
@@ -87,8 +87,18 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
   })
 })
 
+jobs.on('error', err => {
+  console.log('KUE ERROR in worker-remote at:', new Date())
+  console.error(err)
+  // This should restart the process
+  process.exit(1)
+})
+
+process.on('uncaughtException', err => {
+  console.log('uncaughtException in worker-remote at:', new Date())
+  console.error(err)
+  process.exit(1)
+})
+
 // Start Heartbeat
 setInterval(heartbeat, 5000)
-
-// Start Queue Server
-kue.app.listen(3000)

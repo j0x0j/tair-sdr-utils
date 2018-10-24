@@ -95,8 +95,7 @@ child1.stdout.on('data', chunk => {
 // To disable rtl_fm logs
 child1.stderr.pipe(process.stderr)
 
-// pm2 start app.js --kill-timeout 3000
-
+// Error handling
 jobs.on('error', err => {
   console.log('KUE ERROR at:', new Date())
   console.error(err)
@@ -106,4 +105,12 @@ jobs.on('error', err => {
 process.on('SIGINT', function () {
   console.log('SIGINT at:', new Date())
   child1.kill('SIGINT')
+})
+
+process.on('uncaughtException', err => {
+  console.log('uncaughtException in multiplex at:', new Date())
+  console.log('Station: %s, Device: %s', STATION, DEVICE)
+  console.error(err)
+  child1.kill('SIGINT')
+  process.exit(1)
 })

@@ -48,5 +48,14 @@
       "error_file": "./logs/match-uploader.err.log",
       "out_file": "./logs/match-uploader.out.log"
     },
+    {
+      "exec_mode": "fork_mode",
+      "script": "./processGovernor.js",
+      "name": "process-governor",
+      "node_args": [],
+      "env": {},
+      "error_file": "./logs/process-governor.err.log",
+      "out_file": "./logs/process-governor.out.log"
+    }
   ]
 }
