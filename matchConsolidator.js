@@ -64,7 +64,8 @@ jobs.process('match-segment', 1, (job, done) => {
   // missingTimeLimit is the limit for missing matched audio duration.
   // if we get a match for a song that is already missing too much matched time, it is not a match.
   // for example, we could just be hearing a clip of a song being used in an ad.
-  let missingTimeLimit = SAMPLE_TIME
+  // matches must have less than SAMPLE_TIME or 10% missing, whichever is greater.
+  let missingTimeLimit = Math.max(SAMPLE_TIME, job.data.song_duration*100) // 100 bc it's 1000/10 (10% of duration*1000)
   let segmentCount = 0
 
   // Don't add possible matches if there is already more missing time than allowed to verify a match
@@ -219,7 +220,7 @@ jobs.process('match-segment', 1, (job, done) => {
           delete possibleMatches[job.data.market][job.data.station][job.data.song_id][songStartTimeString]
         }
       }
-    }, SAMPLE_TIME * 2)
+    }, missingTimeLimit + MATCH_PADDING)
   }
   done()
 })
