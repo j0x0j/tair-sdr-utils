@@ -9,7 +9,6 @@ const jobs = kue.createQueue()
 const log = fs.createWriteStream(path.join(__dirname, '/matches.log'), { flags: 'w' })
 
 const config = dotenv.load().parsed
-const ACCEPTED_CONFIDENCE = +config.ACCEPTED_CONFIDENCE
 const CONCURRENT_JOBS = +config.CONCURRENT_JOBS
 const DEJAVU_HOST = 'dejavu.tair.network'
 let NO_CONNECTION = false
@@ -65,9 +64,7 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
     }
     possibleMatches.forEach((dejavuData) => {
       prettyLog('dejavu confidence is:', dejavuData && dejavuData.confidence)
-      if (dejavuData && dejavuData.confidence && dejavuData.confidence >= ACCEPTED_CONFIDENCE) {
-        prettyLog('dejavu confidence passed threshold of:', ACCEPTED_CONFIDENCE)
-        // it's a match, add a match segment to the job queue
+      if (dejavuData && dejavuData.confidence) {
         let segmentData = {
           song_id: dejavuData.song_id,
           creative: dejavuData.creative_id,
@@ -77,6 +74,7 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
           timestamp: job.data.timestamp,
           station: job.data.station,
           market: job.data.market,
+          confidence: dejavuData.confidence,
           uuid: uuidv4()
         }
         jobs.create('match-segment', segmentData).removeOnComplete(true).save()

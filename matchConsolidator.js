@@ -12,6 +12,7 @@ const config = dotenv.load().parsed
 const SAMPLE_TIME = +config.SAMPLE_TIME
 // this is the number of milliseconds of audio to include before and after a match
 const MATCH_PADDING = 5000
+const ACCEPTED_CONFIDENCE = +config.ACCEPTED_CONFIDENCE
 
 let possibleMatches = {}
 /*
@@ -91,20 +92,38 @@ jobs.process('match-segment', 1, (job, done) => {
         segments: []
       }
     }
-
-    possibleMatch.segments.push({
+    // only push the segment if its confidence is higher than any existing segment with the "same" timestamp (within a second)
+    // this way, after the ad time passes, we will have the segments with the highest confidence for the given timestamp
+    const segment = {
       uuid: job.data.uuid,
       offset_seconds: job.data.offset_seconds,
-      timestamp: job.data.timestamp
-    })
+      timestamp: job.data.timestamp,
+      confidence: job.data.confidence
+    }
+    let found = false
+    for (let seg of possibleMatch.segments) {
+      // if a seg matches out timestamp (within one second)
+      if (Math.abs(seg.timestamp - segment.timestamp) < 1000) {
+        found = true
+        if (segment.confidence > seg.confidence) {
+          Object.assign(seg, segment);
+        }
+        break
+      }
+    }
+    if (!found) {
+      possibleMatch.segments.push(segment)
+    }
     segmentCount = possibleMatch.segments.length
     prettyLog('Segment count is: ' + segmentCount)
     // after 2 sample times,
     setTimeout(() => {
       let timeAccountedFor = 0 // milliseconds
+      let enoughTimeHasPassed = Date.now() >= (songStartTime + job.data.song_duration*1000 + MATCH_PADDING)
       prettyLog('After the timeout:')
       // check that no new segments have come in for this possibleMatch
-      if (possibleMatch.segments.length === segmentCount) {
+      // if the ad time since song_start_time has passed along with the ending MATCH_PADDING
+      if (possibleMatch.segments.length === segmentCount || enoughTimeHasPassed) {
         prettyLog('No more segments have been added')
         const spotDuration = job.data.song_duration * 1000
 
@@ -174,7 +193,13 @@ jobs.process('match-segment', 1, (job, done) => {
         prettyLog('time accounted for is: ' + timeAccountedFor)
 
         // if the possible match identified by song_id has enough time accounted for it
-        if (timeAccountedFor >= (job.data.song_duration * 1000) - missingTimeLimit) {
+        // there is also a conditional check for the average confidence of segments being >= ACCEPTED_CONFIDENCE
+        let averageConfidence = 0
+        for (let seg of possibleMatch.segments) {
+          averageConfidence += seg.confidence
+        }
+        averageConfidence = averageConfidence/possibleMatch.segments.length
+        if (timeAccountedFor >= ((job.data.song_duration * 1000) - missingTimeLimit) && averageConfidence >= ACCEPTED_CONFIDENCE) {
           let lastSegment = possibleMatch.segments[possibleMatch.segments.length - 1]
           let paddedStartTime = Math.round(lastSegment.timestamp - (lastSegment.offset_seconds * 1000) - MATCH_PADDING)
           let paddedEndTime = Math.round(paddedStartTime + (job.data.song_duration * 1000) + (MATCH_PADDING * 2))
@@ -183,6 +208,7 @@ jobs.process('match-segment', 1, (job, done) => {
           prettyLog('paddedStartTime: ' + paddedStartTime)
           prettyLog('paddedEndTime: ' + paddedEndTime)
           prettyLog('duration: ' + (paddedEndTime - paddedStartTime))
+          prettyLog('averageConfidence: ' + averageConfidence)
 
           redisClient.zrangebyscore(`SIGNAL_CACHE_${possibleMatch.station.replace(/ /g, '')}`, paddedStartTime, paddedEndTime, (err, chunkStrings) => {
             if (err) {
