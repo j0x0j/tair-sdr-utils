@@ -46,7 +46,9 @@
       "script": "./matchUploader.js",
       "name": "match-uploader",
       "node_args": [],
-      "env": {},
+      "env": {
+        "NODE_ENV": "test",
+      },
       "error_file": "./logs/match-uploader.err.log",
       "out_file": "./logs/match-uploader.out.log"
     },

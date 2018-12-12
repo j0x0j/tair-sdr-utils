@@ -54,14 +54,18 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
         timestamp: new Date(job.data.timestamp).toISOString(),
         nodeName: DEVICE
       }
-      const options = {
-        method: 'POST',
-        uri: `http://${BMP_HOST}/api/match`,
-        resolveWithFullResponse: true,
-        json: true,
-        body
+      if (process.env.NODE_ENV === 'test') {
+        console.log('Send match to BMP:', body)
+      } else {
+        const options = {
+          method: 'POST',
+          uri: `http://${BMP_HOST}/api/match`,
+          resolveWithFullResponse: true,
+          json: true,
+          body
+        }
+        request(options, (bmpErr) => { done(bmpErr) })
       }
-      request(options, (bmpErr) => { done(bmpErr) })
     })
   })
 })

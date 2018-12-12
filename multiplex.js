@@ -5,8 +5,6 @@ const kue = require('kue')
 const jobs = kue.createQueue()
 const dotenv = require('dotenv')
 const redisClient = jobs.client
-const simpleTimer = require('node-timers/simple')
-const simple = simpleTimer({ pollInterval: 100 })
 
 const config = dotenv.load().parsed
 const MARKET = config.MARKET
@@ -60,7 +58,6 @@ const writeStreamErrorHandler = (writeError) => {
 let ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`, opts)
 ws.on('error', writeStreamErrorHandler)
 
-// simple.start()
 let currentBytes = 0
 
 child1.stdout.on('data', chunk => {
@@ -69,7 +66,6 @@ child1.stdout.on('data', chunk => {
   child1.stdout.pause()
   // Define the recurring file stream
   // Get the current timer elapsed time
-  // let time = simple.time()
   currentBytes += chunk.length
   // if (time >= SAMPLE_TIME) {
   if (currentBytes >= MAX_BYTES_PER_SAMPLE) {
@@ -96,8 +92,6 @@ child1.stdout.on('data', chunk => {
     ws.end()
     // Generate a new sample id
     uuid = uuidv4()
-    // Reset timer
-    simple.reset().start()
     // Create new sample file
     ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`, opts)
     ws.on('error', writeStreamErrorHandler)
