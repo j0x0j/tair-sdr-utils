@@ -102,7 +102,7 @@ child1.stdout.on('data', chunk => {
   }
   // add chunk to redis sorted set: SIGNAL_CACHE for Date.now()
   // This timestamp won't match the ffempeg timestamp exactly but will be close enough for our needs.
-  redisClient.zadd(`SIGNAL_CACHE_${STATION.replace(/ /g, '')}`, 'NX', Date.now(), chunk.toString('base64'))
+  redisClient.zadd(`SIGNAL_CACHE_${STATION.replace(/ /g, '')}`, 'NX', now, chunk.toString('base64'))
 })
 
 // To disable rtl_fm logs

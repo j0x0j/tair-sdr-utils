@@ -60,9 +60,11 @@ function checkForExistingMatch (market, station, songId, songStartTime) {
 jobs.process('match-segment', 1, (job, done) => {
   prettyLog('New Match Segment Job for:', job.data.song_name)
   prettyLog(job.data)
+  let completed = false
   let songStartTime = Math.round(job.data.timestamp - (job.data.offset_seconds * 1000))
   let songStartTimeString = songStartTime.toString()
   let possibleMatch = checkForExistingMatch(job.data.market, job.data.station, job.data.song_id, songStartTime)
+  let spotDuration = job.data.song_duration * 1000
   // missingTimeLimit is the limit for missing matched audio duration.
   // if we get a match for a song that is already missing too much matched time, it is not a match.
   // for example, we could just be hearing a clip of a song being used in an ad.
@@ -121,14 +123,12 @@ jobs.process('match-segment', 1, (job, done) => {
     // after 2 sample times,
     setTimeout(() => {
       let timeAccountedFor = 0 // milliseconds
-      let enoughTimeHasPassed = Date.now() >= (songStartTime + job.data.song_duration * 1000 + MATCH_PADDING)
+      let enoughTimeHasPassed = Date.now() >= (songStartTime + spotDuration + MATCH_PADDING)
       prettyLog('After the timeout: ' + job.data.song_name)
       // check that no new segments have come in for this possibleMatch
       // if the ad time since song_start_time has passed along with the ending MATCH_PADDING
-      // if ((possibleMatch.segments.length === segmentCount || enoughTimeHasPassed) && possibleMatches[job.data.market][job.data.station][job.data.song_id][songStartTimeString]) {
-      if (possibleMatch.segments.length === segmentCount || enoughTimeHasPassed) {
+      if ((possibleMatch.segments.length === segmentCount || enoughTimeHasPassed) && !completed) {
         prettyLog('No more segments have been added')
-        const spotDuration = job.data.song_duration * 1000
 
         // verifiedStartTime & verifiedEndTime will define the range of time accounted for in this spot
         let verifiedStartTime
@@ -202,14 +202,14 @@ jobs.process('match-segment', 1, (job, done) => {
           averageConfidence += seg.confidence
         }
         averageConfidence = averageConfidence / possibleMatch.segments.length
-        if (timeAccountedFor >= ((job.data.song_duration * 1000) - missingTimeLimit) && averageConfidence >= ACCEPTED_CONFIDENCE) {
-          let lastSegment = possibleMatch.segments[possibleMatch.segments.length - 1]
-          let paddedStartTime = Math.round(lastSegment.timestamp - (lastSegment.offset_seconds * 1000) - MATCH_PADDING)
-          let paddedEndTime = Math.round(paddedStartTime + (job.data.song_duration * 1000) + (MATCH_PADDING * 2))
+        if (timeAccountedFor >= (spotDuration - missingTimeLimit) && averageConfidence >= ACCEPTED_CONFIDENCE) {
+          let paddedStartTime = Math.round(possibleMatch.song_start_time - MATCH_PADDING)
+          let paddedEndTime = Math.round(possibleMatch.song_start_time + spotDuration + MATCH_PADDING)
           let uuid = uuidv4()
 
           prettyLog('paddedStartTime: ' + paddedStartTime)
           prettyLog('paddedEndTime: ' + paddedEndTime)
+          prettyLog('now: ' + Date.now())
           prettyLog('duration: ' + (paddedEndTime - paddedStartTime))
           prettyLog('averageConfidence: ' + averageConfidence)
 
@@ -227,6 +227,7 @@ jobs.process('match-segment', 1, (job, done) => {
             })
             ws.on('error', (writeError) => {
               delete possibleMatches[job.data.market][job.data.station][job.data.song_id][songStartTimeString]
+              completed = true
             })
             ws.on('end', () => {
               prettyLog(`Created local match file: ./matches/match_${uuid}.wav for:`, possibleMatch.song_name)
@@ -242,14 +243,17 @@ jobs.process('match-segment', 1, (job, done) => {
               }).save()
               // clear possibleMatches
               delete possibleMatches[job.data.market][job.data.station][job.data.song_id][songStartTimeString]
+              completed = true
             })
             ws.end()
           })
         } else {
           delete possibleMatches[job.data.market][job.data.station][job.data.song_id][songStartTimeString]
+          completed = true
         }
       }
-    }, missingTimeLimit + MATCH_PADDING)
+    }, SAMPLE_TIME * 2 + MATCH_PADDING)
+
   }
   done()
 })
