@@ -68,10 +68,10 @@ child1.stdout.on('data', chunk => {
         timestamp: now - SAMPLE_TIME,
         uuid: prevuuid
       }).removeOnComplete(true).save()
-      // Only write after previous stream has ended
-      ws.write(chunk)
       // Resume stream manually
       child1.stdout.resume()
+      // Only write after previous stream has ended
+      ws.write(chunk)
     })
     // Close the current stream
     ws.end()
@@ -83,9 +83,10 @@ child1.stdout.on('data', chunk => {
     ws = new wav.FileWriter(`./samples/sample_${uuid}.wav`, opts)
     ws.on('error', writeStreamErrorHandler)
   } else {
-    ws.write(chunk)
     // Resume stream manually
+    // before write to not fail on error
     child1.stdout.resume()
+    ws.write(chunk)
   }
   // add chunk to redis sorted set: SIGNAL_CACHE for Date.now()
   // This timestamp won't match the ffempeg timestamp exactly but will be close enough for our needs.
