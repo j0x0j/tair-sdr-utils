@@ -1,5 +1,9 @@
 const dotenv = require('dotenv')
 const kue = require('kue')
+const fs = require('fs')
+const path = require('path')
+const { exec } = require('child_process')
+
 const jobs = kue.createQueue()
 const config = dotenv.load().parsed
 
@@ -9,6 +13,9 @@ const removeInactiveJobs = () => {
     ids.forEach(id => {
       kue.Job.get(id, (err, job) => {
         if (err) throw err
+        const SAMPLE_PATH =
+          path.join(__dirname, `/samples/sample_${job.data.uuid}.wav`)
+        fs.unlinkSync(SAMPLE_PATH)
         job.remove()
       })
     })
@@ -21,6 +28,9 @@ const checkInactiveJobCount = () => {
     if (total > +config.CONCURRENT_JOBS * 100) {
       removeInactiveJobs()
       // Should restart worker-remote
+      exec('pm2 restart worker-remote', (error, stdout, stderr) => {
+        console.log('Restarted [worker-remote]', error, stdout, stderr)
+      })
     }
   })
 }
