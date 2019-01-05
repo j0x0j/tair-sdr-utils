@@ -204,7 +204,7 @@ jobs.process('match-segment', 1, (job, done) => {
         averageConfidence = averageConfidence / possibleMatch.segments.length
         if (timeAccountedFor >= (spotDuration - missingTimeLimit) && averageConfidence >= ACCEPTED_CONFIDENCE) {
           let paddedStartTime = Math.round(possibleMatch.song_start_time - MATCH_PADDING)
-          let paddedEndTime = Math.round(possibleMatch.song_start_time + spotDuration + MATCH_PADDING)
+          let paddedEndTime = Math.round(possibleMatch.song_start_time + (spotDuration * 2) + MATCH_PADDING)
           let uuid = uuidv4()
 
           prettyLog('paddedStartTime: ' + paddedStartTime)
@@ -253,7 +253,6 @@ jobs.process('match-segment', 1, (job, done) => {
         }
       }
     }, SAMPLE_TIME * 2 + MATCH_PADDING)
-
   }
   done()
 })
