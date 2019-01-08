@@ -127,7 +127,14 @@ jobs.process('match-segment', 1, (job, done) => {
       prettyLog('After the timeout: ' + job.data.song_name)
       // check that no new segments have come in for this possibleMatch
       // if the ad time since song_start_time has passed along with the ending MATCH_PADDING
-      if ((possibleMatch.segments.length === segmentCount || enoughTimeHasPassed) && !completed) {
+      if (
+        (possibleMatch.segments.length === segmentCount || enoughTimeHasPassed) &&
+        !completed &&
+        // Verify that the segment tree object for this intance of song_id in
+        // market / station has NOT been deleted so as to not create multiple match
+        // jobs for a song_id that was just recognized the segment before
+        possibleMatches[job.data.market][job.data.station][job.data.song_id]
+      ) {
         prettyLog('No more segments have been added')
 
         // verifiedStartTime & verifiedEndTime will define the range of time accounted for in this spot
@@ -204,7 +211,7 @@ jobs.process('match-segment', 1, (job, done) => {
         averageConfidence = averageConfidence / possibleMatch.segments.length
         if (timeAccountedFor >= (spotDuration - missingTimeLimit) && averageConfidence >= ACCEPTED_CONFIDENCE) {
           let paddedStartTime = Math.round(possibleMatch.song_start_time - MATCH_PADDING)
-          let paddedEndTime = Math.round(possibleMatch.song_start_time + (spotDuration * 2) + MATCH_PADDING)
+          let paddedEndTime = Math.round(possibleMatch.song_start_time + spotDuration + MATCH_PADDING)
           let uuid = uuidv4()
 
           prettyLog('paddedStartTime: ' + paddedStartTime)
@@ -222,11 +229,12 @@ jobs.process('match-segment', 1, (job, done) => {
               endianness: 'LE',
               channels: 1
             })
+            console.log('9900013', paddedStartTime, paddedEndTime, chunkStrings.length)
             chunkStrings.forEach((chunkString) => {
               ws.write(Buffer.from(chunkString, 'base64'))
             })
             ws.on('error', (writeError) => {
-              delete possibleMatches[job.data.market][job.data.station][job.data.song_id][songStartTimeString]
+              delete possibleMatches[job.data.market][job.data.station][job.data.song_id]
               completed = true
             })
             ws.on('end', () => {
@@ -242,13 +250,13 @@ jobs.process('match-segment', 1, (job, done) => {
                 uuid
               }).save()
               // clear possibleMatches
-              delete possibleMatches[job.data.market][job.data.station][job.data.song_id][songStartTimeString]
+              delete possibleMatches[job.data.market][job.data.station][job.data.song_id]
               completed = true
             })
             ws.end()
           })
         } else {
-          delete possibleMatches[job.data.market][job.data.station][job.data.song_id][songStartTimeString]
+          delete possibleMatches[job.data.market][job.data.station][job.data.song_id]
           completed = true
         }
       }
