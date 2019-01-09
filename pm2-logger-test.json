@@ -1,0 +1,65 @@
+{
+  "apps": [
+    {
+      "exec_mode": "fork_mode",
+      "script": "./multiplex.js",
+      "name": "multiplex-01",
+      "node_args": [],
+      "env": {
+        "NODE_ENV": "test",
+        "TEST_FILE_PATH": "./test/data/scrape_test_selection_002.wav",
+        "band": "110.1M",
+        "device": "0"
+      },
+      "error_file": "./logs/multiplex-01.err.log",
+      "out_file": "./logs/multiplex-01.out.log"
+    },
+    {
+      "exec_mode": "fork_mode",
+      "script": "./workerRemote.js",
+      "name": "worker-remote",
+      "node_args": [],
+      "env": {},
+      "error_file": "./logs/worker-remote.err.log",
+      "out_file": "./logs/worker-remote.out.log"
+    },
+    {
+      "exec_mode": "fork_mode",
+      "script": "./matchConsolidator.js",
+      "name": "match-consolidator",
+      "node_args": [],
+      "env": {},
+      "error_file": "./logs/match-consolidator.err.log",
+      "out_file": "./logs/match-consolidator.out.log"
+    },
+    {
+      "exec_mode": "fork_mode",
+      "script": "./signalCacheCleaner.js",
+      "name": "signal-cache-cleaner",
+      "node_args": [],
+      "env": {},
+      "error_file": "./logs/signal-cache-cleaner.err.log",
+      "out_file": "./logs/signal-cache-cleaner.out.log"
+    },
+    {
+      "exec_mode": "fork_mode",
+      "script": "./matchUploader.js",
+      "name": "match-uploader",
+      "node_args": [],
+      "env": {
+        "NODE_ENV": "test",
+      },
+      "error_file": "./logs/match-uploader.err.log",
+      "out_file": "./logs/match-uploader.out.log"
+    },
+    {
+      "exec_mode": "fork_mode",
+      "script": "./processGovernor.js",
+      "name": "process-governor",
+      "node_args": [],
+      "env": {},
+      "error_file": "./logs/process-governor.err.log",
+      "out_file": "./logs/process-governor.out.log"
+    }
+  ]
+}

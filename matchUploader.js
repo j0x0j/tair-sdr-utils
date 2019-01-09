@@ -15,12 +15,11 @@ if (config.AWS_KEY && config.AWS_SECRET) {
 }
 
 const s3 = new aws.S3({ apiVersion: '2006-03-01' })
-const CONCURRENT_JOBS = +config.CONCURRENT_JOBS
 const S3_BUCKET = config.S3_BUCKET
 const DEVICE = config.DEVICE
 const BMP_HOST = 'bmp.tair.network'
 
-jobs.process('match', CONCURRENT_JOBS, (job, done) => {
+jobs.process('match', 1, (job, done) => {
   prettyLog('New match Job:', job.data.uuid)
   // Handle failure backoff
   job.attempts(3).backoff({ type: 'exponential' })
@@ -44,7 +43,7 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
       prettyLog('file uploaded to s3 for:', job.data.song_name)
       prettyLog('s3 path: ', s3Path)
       prettyLog('s3 response: ', response)
-      fs.unlinkSync(job.data.file_path)
+      // fs.unlinkSync(job.data.file_path)
       // post the match to the BMP:
       const body = {
         station: job.data.station,
@@ -54,14 +53,19 @@ jobs.process('match', CONCURRENT_JOBS, (job, done) => {
         timestamp: new Date(job.data.timestamp).toISOString(),
         nodeName: DEVICE
       }
-      const options = {
-        method: 'POST',
-        uri: `http://${BMP_HOST}/api/match`,
-        resolveWithFullResponse: true,
-        json: true,
-        body
+      if (process.env.NODE_ENV === 'test') {
+        console.log('Send match to BMP:', body)
+        done()
+      } else {
+        const options = {
+          method: 'POST',
+          uri: `http://${BMP_HOST}/api/match`,
+          resolveWithFullResponse: true,
+          json: true,
+          body
+        }
+        request(options, (bmpErr) => { done(bmpErr) })
       }
-      request(options, (bmpErr) => { done(bmpErr) })
     })
   })
 })
