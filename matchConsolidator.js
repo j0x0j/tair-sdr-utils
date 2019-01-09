@@ -229,7 +229,6 @@ jobs.process('match-segment', 1, (job, done) => {
               endianness: 'LE',
               channels: 1
             })
-            console.log('9900013', paddedStartTime, paddedEndTime, chunkStrings.length)
             chunkStrings.forEach((chunkString) => {
               ws.write(Buffer.from(chunkString, 'base64'))
             })
