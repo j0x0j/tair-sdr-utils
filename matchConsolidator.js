@@ -120,7 +120,9 @@ jobs.process('match-segment', 1, (job, done) => {
       // the last segment, should be greater than the last offset plus SAMPLE_TIME in seconds
       const lastSegment = possibleMatch.segments[possibleMatch.segments.length - 1]
       const sampleTimeSeconds = SAMPLE_TIME / 1000
-      if (!lastSegment || segment.offset_seconds >= lastSegment.offset_seconds + sampleTimeSeconds) {
+      // Millisecond offsets can affect the segment.offset_seconds comparison, so we need to
+      // allow for some fuzzyness here. We'll add 80% of the sampleTimeSeconds to the lastSegment offset
+      if (!lastSegment || segment.offset_seconds >= lastSegment.offset_seconds + sampleTimeSeconds * 0.8) {
         possibleMatch.segments.push(segment)
       }
     }
