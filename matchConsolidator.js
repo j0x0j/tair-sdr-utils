@@ -116,7 +116,15 @@ jobs.process('match-segment', 1, (job, done) => {
       }
     }
     if (!found) {
-      possibleMatch.segments.push(segment)
+      // Is the segment the first one or is the offset_seconds for the segment chronological to
+      // the last segment, should be greater than the last offset plus SAMPLE_TIME in seconds
+      const lastSegment = possibleMatch.segments[possibleMatch.segments.length - 1]
+      const sampleTimeSeconds = SAMPLE_TIME / 1000
+      // Millisecond offsets can affect the segment.offset_seconds comparison, so we need to
+      // allow for some fuzzyness here. We'll add 80% of the sampleTimeSeconds to the lastSegment offset
+      if (!lastSegment || segment.offset_seconds >= lastSegment.offset_seconds + sampleTimeSeconds * 0.8) {
+        possibleMatch.segments.push(segment)
+      }
     }
     segmentCount = possibleMatch.segments.length
     prettyLog('Segment count is: ' + segmentCount + ' for ' + job.data.song_name)
