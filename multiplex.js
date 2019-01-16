@@ -67,7 +67,6 @@ child1.stdout.on('data', chunk => {
   // Define the recurring file stream
   // Get the current timer elapsed time
   currentBytes += chunk.length
-  // if (time >= SAMPLE_TIME) {
   if (currentBytes >= MAX_BYTES_PER_SAMPLE) {
     currentBytes = 0
     // Should only create a job after write stream ends

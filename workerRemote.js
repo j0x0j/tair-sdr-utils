@@ -78,7 +78,7 @@ jobs.process('sample', CONCURRENT_JOBS, (job, done) => {
           uuid: uuidv4()
         }
         jobs.create('match-segment', segmentData).removeOnComplete(true).save()
-        log.write(`${job.data.station};${dejavuData.confidence};${dejavuData.song_name};${job.data.uuid};${job.data.timestamp};${dejavuData.offset_seconds};${new Date(job.data.timestamp).toTimeString()}` + '\n')
+        log.write(`${job.data.station};${dejavuData.confidence};${dejavuData.song_id};${dejavuData.song_name};${dejavuData.creative_id};${job.data.uuid};${job.data.timestamp};${dejavuData.song_duration};${dejavuData.offset_seconds};${new Date(job.data.timestamp).toTimeString()}` + '\n')
       }
     })
     cleanUpSampleFile(SAMPLE_PATH, done)
@@ -98,5 +98,7 @@ process.on('uncaughtException', err => {
   process.exit(1)
 })
 
-// Start Heartbeat
-setInterval(heartbeat, 5000)
+// Start Heartbeat when using a remote dejavu server for sample processing
+if (DEJAVU_HOST === 'dejavu.tair.network') {
+  setInterval(heartbeat, 5000)
+}

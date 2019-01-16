@@ -130,8 +130,9 @@ jobs.process('match-segment', 1, (job, done) => {
     prettyLog('Segment count is: ' + segmentCount + ' for ' + job.data.song_name)
     // after 2 sample times,
     setTimeout(() => {
+      let now = job.data.isReplay ? (job.data.timestamp - SAMPLE_TIME * 1000) : Date.now()
       let timeAccountedFor = 0 // milliseconds
-      let enoughTimeHasPassed = Date.now() >= (songStartTime + spotDuration + MATCH_PADDING)
+      let enoughTimeHasPassed = now >= (songStartTime + spotDuration + MATCH_PADDING)
       prettyLog('After the timeout: ' + job.data.song_name)
       // check that no new segments have come in for this possibleMatch
       // if the ad time since song_start_time has passed along with the ending MATCH_PADDING
@@ -224,7 +225,7 @@ jobs.process('match-segment', 1, (job, done) => {
 
           prettyLog('paddedStartTime: ' + paddedStartTime)
           prettyLog('paddedEndTime: ' + paddedEndTime)
-          prettyLog('now: ' + Date.now())
+          prettyLog('now: ' + now)
           prettyLog('duration: ' + (paddedEndTime - paddedStartTime))
           prettyLog('averageConfidence: ' + averageConfidence)
 
