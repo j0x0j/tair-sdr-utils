@@ -157,7 +157,8 @@ jobs.process('match-segment', 1, (job, done) => {
           // segmentOffset (ms) is the start time of this segment minus the start time of the entire spot
           // it is negative when the segment begins before the spot, and positive when it begins after the spot begins
           // it is zero if both the segment and the spot start at the same time
-          const segmentOffset = segment.offset_seconds * 1000
+          // use spotDuration if offset_seconds is larger than the spot length
+          const segmentOffset = Math.min(segment.offset_seconds * 1000, spotDuration)
 
           // spotStartTime (ms) is when the entire spot begins
           const spotStartTime = segment.timestamp - segmentOffset
@@ -191,7 +192,7 @@ jobs.process('match-segment', 1, (job, done) => {
           } else {
             // since verifiedStartTime is defined,
             // this segment must start after verifiedStartTime and before segmentEndTime
-            const validStart = segmentStartTime > verifiedStartTime && segmentStartTime < spotEndTime
+            const validStart = segmentStartTime > verifiedStartTime && segmentStartTime <= spotEndTime
             // and this segment must end after verifiedEndTime
             const validEnd = segmentEndTime > verifiedEndTime
 
