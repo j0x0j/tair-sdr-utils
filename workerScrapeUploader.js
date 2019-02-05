@@ -12,7 +12,7 @@ if (config.AWS_KEY && config.AWS_SECRET) {
   })
 }
 
-const s3 = new aws.S3({apiVersion: '2006-03-01'})
+const s3 = new aws.S3({ apiVersion: '2006-03-01' })
 const jobs = kue.createQueue()
 
 const CONCURRENT_JOBS = +config.CONCURRENT_JOBS

@@ -2,11 +2,13 @@ const cp = require('child_process')
 const uuidv4 = require('uuid/v4')
 const wav = require('wav')
 const kue = require('kue')
-const simpleTimer = require('node-timers/simple')
 
 const STATION = process.env.band || process.argv[2]
 const DEVICE = process.env.device || process.argv[3]
 const SCRAPE_DURATION = 1000 * 60 * 60
+// Max bytes to write in order to create a sample file 44100 is our sample
+// rate at 8 bits, we use 16 bit samples so we multiply by 2
+const MAX_BYTES_PER_SAMPLE = (SCRAPE_DURATION / 1000 * 44100) * 2
 
 if (!STATION || !DEVICE) {
   throw new Error('Needs a station and device index')
@@ -24,17 +26,6 @@ const child1 = cp.spawn('rtl_fm', [
   '-r', '44.1k'
 ])
 
-const child2 = cp.spawn('ffmpeg', [
-  '-f', 's16le',
-  '-ac', '1',
-  '-i', '-',
-  '-acodec', 'pcm_s16le',
-  '-f', 'wav',
-  '-'
-])
-
-const simple = simpleTimer({ pollInterval: 100 })
-
 // Create queue
 const jobs = kue.createQueue()
 
@@ -51,15 +42,13 @@ let ws = new wav.FileWriter(
   opts
 )
 
-simple.start()
+let currentBytes = 0
 
 child1.stdout.on('data', chunk => {
-  child2.stdin.write(chunk)
-})
-
-child2.stdout.on('data', chunk => {
-  let time = simple.time()
-  if (time >= SCRAPE_DURATION) {
+  currentBytes += chunk.length
+  child1.stdout.pause()
+  if (currentBytes >= MAX_BYTES_PER_SAMPLE) {
+    currentBytes = 0
     const ts = new Date()
     ts.setSeconds(ts.getSeconds() - SCRAPE_DURATION)
     jobs.create('scrape', {
@@ -68,7 +57,6 @@ child2.stdout.on('data', chunk => {
       uuid
     }).removeOnComplete(true).save()
     uuid = uuidv4()
-    simple.reset().start()
     ws.end()
     ws = new wav.FileWriter(
       `./scrapes/scrape_${uuid}.wav`,
@@ -76,13 +64,12 @@ child2.stdout.on('data', chunk => {
     )
   }
   ws.write(chunk)
+  child1.stdout.resume()
 })
 
 child1.stderr.pipe(process.stdout)
-child2.stderr.pipe(process.stdout)
 
 process.on('SIGINT', function () {
-  process.kill(child1.pid, 'SIGKILL')
-  process.kill(child2.pid, 'SIGKILL')
+  child1.kill('SIGINT')
   process.exit(0)
 })
